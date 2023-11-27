@@ -11,9 +11,7 @@ class BaseClient:
     DEFAULT_USECOLS = None
     DEFAULT_STARTROW = None
 
-    def _read_from_sheet(
-        self, file_path: Path, sheet_name: str, **kwargs
-    ) -> pd.DataFrame:
+    def _read_from_sheet(self, file_path: Path, sheet_name: str, **kwargs) -> pd.DataFrame:
         """
         Read data from a specific sheet.
 
@@ -32,9 +30,7 @@ class BaseClient:
             **kwargs,
         )
 
-    def _write_to_sheet(
-        self, df: pd.DataFrame, file_path: Path, sheet_name: str, **kwargs
-    ):
+    def _write_to_sheet(self, df: pd.DataFrame, file_path: Path, sheet_name: str, **kwargs):
         """
         Write data to a specific sheet.
 
@@ -43,12 +39,8 @@ class BaseClient:
         :param sheet_name: Name of the sheet to write to.
         """
         startrow = kwargs.pop("startrow", self.DEFAULT_STARTROW)
-        with pd.ExcelWriter(
-            file_path, engine=self.engine, mode="a", if_sheet_exists="replace"
-        ) as writer:
-            df.to_excel(
-                writer, sheet_name=sheet_name, index=False, startrow=startrow, **kwargs
-            )
+        with pd.ExcelWriter(file_path, engine=self.engine, mode="a", if_sheet_exists="replace") as writer:
+            df.to_excel(writer, sheet_name=sheet_name, index=False, startrow=startrow, **kwargs)
 
     def validate(self):
         """Validate if the Excel file has the expected sheet names."""
@@ -63,6 +55,7 @@ class BaseClient:
 
 class SetsClient(BaseClient):
     DEFAULT_SKIPROWS = 0
+    DEFAULT_STARTROW = 0
     DEFAULT_USECOLS = [0]
 
     def __init__(self, file, engine: str = "openpyxl"):
@@ -96,41 +89,31 @@ class SetsClient(BaseClient):
         self._write_to_sheet(df, self.file, "Technology")
 
     def get_storage_of_nodes(self):
-        return self._read_from_sheet(
-            self.file, "StorageOfNodes", usecols=[0, 1], skiprows=2
-        )
+        return self._read_from_sheet(self.file, "StorageOfNodes", usecols=[0, 1], skiprows=2)
 
     def set_storage_of_nodes(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "StorageOfNodes")
 
     def get_directional_lines(self):
-        return self._read_from_sheet(
-            self.file, "DirectionalLines", skiprows=2, usecols=[0, 1]
-        )
+        return self._read_from_sheet(self.file, "DirectionalLines", skiprows=2, usecols=[0, 1])
 
     def set_directional_lines(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "DirectionalLines", startrow=2)
 
     def get_line_type_of_directional_lines(self):
-        return self._read_from_sheet(
-            self.file, "LineTypeOfDirectionalLines", skiprows=2, usecols=[0, 1, 2]
-        )
+        return self._read_from_sheet(self.file, "LineTypeOfDirectionalLines", skiprows=2, usecols=[0, 1, 2])
 
     def set_line_type_of_directional_lines(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "LineTypeOfDirectionalLines", startrow=2)
 
     def get_generators_of_node(self):
-        return self._read_from_sheet(
-            self.file, "GeneratorsOfNode", skiprows=2, usecols=[0, 1]
-        )
+        return self._read_from_sheet(self.file, "GeneratorsOfNode", skiprows=2, usecols=[0, 1])
 
     def set_generators_of_node(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "GeneratorsOfNode", startrow=2)
 
     def get_generators_of_technology(self):
-        return self._read_from_sheet(
-            self.file, "GeneratorsOfTechnology", skiprows=2, usecols=[0, 1]
-        )
+        return self._read_from_sheet(self.file, "GeneratorsOfTechnology", skiprows=2, usecols=[0, 1])
 
     def set_generators_of_technology(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "GeneratorsOfTechnology", startrow=2)
@@ -153,10 +136,10 @@ class GeneratorClient(BaseClient):
 
         self.validate()
 
-    def get_captial_costs(self):
+    def get_capital_costs(self):
         return self._read_from_sheet(self.file, "CapitalCosts")
 
-    def set_captial_costs(self, df: pd.DataFrame):
+    def set_capital_costs(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "CapitalCosts")
 
     def get_fixed_om_costs(self):
@@ -208,9 +191,7 @@ class GeneratorClient(BaseClient):
         self._write_to_sheet(df, self.file, "InitialCapacity")
 
     def get_max_built_capacity(self):
-        return self._read_from_sheet(
-            self.file, "MaxBuiltCapacity", usecols=[0, 1, 2, 3]
-        )
+        return self._read_from_sheet(self.file, "MaxBuiltCapacity", usecols=[0, 1, 2, 3])
 
     def set_max_built_capacity(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "MaxBuiltCapacity")
@@ -228,9 +209,7 @@ class GeneratorClient(BaseClient):
         self._write_to_sheet(df, self.file, "RampRate")
 
     def get_generator_type_availability(self):
-        return self._read_from_sheet(
-            self.file, "GeneratorTypeAvailability", usecols=[0, 1]
-        )
+        return self._read_from_sheet(self.file, "GeneratorTypeAvailability", usecols=[0, 1])
 
     def set_generator_type_availability(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "GeneratorTypeAvailability")
@@ -272,9 +251,7 @@ class NodeClient(BaseClient):
         self._write_to_sheet(df, self.file, "NodeLostNodeCost")
 
     def get_hydro_generators_max_annual_production(self):
-        return self._read_from_sheet(
-            self.file, "HydroGenMaxAnnualProduction", usecols=[0, 1]
-        )
+        return self._read_from_sheet(self.file, "HydroGenMaxAnnualProduction", usecols=[0, 1])
 
     def set_hydro_generators_max_annual_production(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "HydroGenMaxAnnualProduction")
@@ -298,9 +275,7 @@ class TransmissionClient(BaseClient):
         self._write_to_sheet(df, self.file, "lineEfficiency")
 
     def get_max_built_capacity(self):
-        return self._read_from_sheet(
-            self.file, "MaxBuiltCapacity", usecols=[0, 1, 2, 3]
-        )
+        return self._read_from_sheet(self.file, "MaxBuiltCapacity", usecols=[0, 1, 2, 3])
 
     def set_max_built_capacity(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "MaxBuiltCapacity")
@@ -330,9 +305,7 @@ class TransmissionClient(BaseClient):
         self._write_to_sheet(df, self.file, "InitialCapacity")
 
     def get_max_install_capacity_raw(self):
-        return self._read_from_sheet(
-            self.file, "MaxInstallCapacityRaw", usecols=[0, 1, 2, 3]
-        )
+        return self._read_from_sheet(self.file, "MaxInstallCapacityRaw", usecols=[0, 1, 2, 3])
 
     def set_max_install_capacity_raw(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "MaxInstallCapacityRaw")
@@ -356,9 +329,7 @@ class StorageClient(BaseClient):
         self.validate()
 
     def get_initial_power_capacity(self):
-        return self._read_from_sheet(
-            self.file, "InitialPowerCapacity", usecols=[0, 1, 2, 3]
-        )
+        return self._read_from_sheet(self.file, "InitialPowerCapacity", usecols=[0, 1, 2, 3])
 
     def set_initial_power_capacity(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "InitialPowerCapacity")
@@ -370,14 +341,10 @@ class StorageClient(BaseClient):
         self._write_to_sheet(df, self.file, "PowerCapitalCost")
 
     def get_power_max_built_capacity(self):
-        return self._read_from_sheet(
-            self.file, "PowerMaxBuiltCapacity", usecols=[0, 1, 2, 3]
-        )
+        return self._read_from_sheet(self.file, "PowerMaxBuiltCapacity", usecols=[0, 1, 2, 3])
 
     def set_power_max_built_capacity(self, df: pd.DataFrame):
-        self._write_to_sheet(
-            df, self.file, "PowerMaxBuiltCapacity", usecols=[0, 1, 2, 3]
-        )
+        self._write_to_sheet(df, self.file, "PowerMaxBuiltCapacity")
 
     def get_energy_capital_cost(self):
         return self._read_from_sheet(self.file, "EnergyCapitalCost", usecols=[0, 1, 2])
@@ -386,33 +353,25 @@ class StorageClient(BaseClient):
         self._write_to_sheet(df, self.file, "EnergyCapitalCost")
 
     def get_initial_energy_capacity(self):
-        return self._read_from_sheet(
-            self.file, "EnergyInitialCapacity", usecols=[0, 1, 2, 3]
-        )
+        return self._read_from_sheet(self.file, "EnergyInitialCapacity", usecols=[0, 1, 2, 3])
 
     def set_initial_energy_capacity(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "EnergyInitialCapacity")
 
     def get_energy_max_built_capacity(self):
-        return self._read_from_sheet(
-            self.file, "EnergyMaxBuiltCapacity", usecols=[0, 1, 2, 3]
-        )
+        return self._read_from_sheet(self.file, "EnergyMaxBuiltCapacity", usecols=[0, 1, 2, 3])
 
     def set_energy_max_built_capacity(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "EnergyMaxBuiltCapacity")
 
     def get_energy_max_installed_capacity(self):
-        return self._read_from_sheet(
-            self.file, "EnergyMaxInstalledCapacity", usecols=[0, 1, 2]
-        )
+        return self._read_from_sheet(self.file, "EnergyMaxInstalledCapacity", usecols=[0, 1, 2])
 
     def set_energy_max_installed_capacity(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "EnergyMaxInstalledCapacity")
 
     def get_power_max_installed_capacity(self):
-        return self._read_from_sheet(
-            self.file, "PowerMaxInstalledCapacity", usecols=[0, 1, 2]
-        )
+        return self._read_from_sheet(self.file, "PowerMaxInstalledCapacity", usecols=[0, 1, 2])
 
     def set_power_max_installed_capacity(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "PowerMaxInstalledCapacity")
@@ -435,10 +394,10 @@ class StorageClient(BaseClient):
     def set_storage_discharge_efficiency(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "StorageDischargeEff")
 
-    def get_storage_power_to_energt(self):
+    def get_storage_power_to_energy(self):
         return self._read_from_sheet(self.file, "StoragePowToEnergy")
 
-    def set_storage_power_to_energt(self, df: pd.DataFrame):
+    def set_storage_power_to_energy(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "StoragePowToEnergy")
 
     def get_lifetime(self):
@@ -448,7 +407,7 @@ class StorageClient(BaseClient):
         self._write_to_sheet(df, self.file, "Lifetime")
 
 
-class GenralClient(BaseClient):
+class GeneralClient(BaseClient):
     DEFAULT_STARTROW = 2
     DEFAULT_SKIPROWS = 2
     DEFAULT_USECOLS = [0, 1]
@@ -502,6 +461,8 @@ class EmpireInputClient:
     :vartype transmission: TransmissionClient
     :ivar storage: Client for managing 'Storage' data.
     :vartype storage: StorageClient
+    :ivar general: Client for managing 'General' data.
+    :vartype general: GeneralClient
     """
 
     def __init__(self, dataset_path: Path, engine: str = "openpyxl"):
@@ -516,6 +477,7 @@ class EmpireInputClient:
         self.nodes = NodeClient(dataset_path / "Node.xlsx")
         self.transmission = TransmissionClient(dataset_path / "Transmission.xlsx")
         self.storage = StorageClient(dataset_path / "Storage.xlsx")
+        self.general = GeneralClient(dataset_path / "General.xlsx")
 
 
 # Example usage:
@@ -529,7 +491,7 @@ if __name__ == "__main__":
     # df = client.get_directional_lines()
     # client.set_directional_lines(df)
 
-    df = client.generator.get_captial_costs()
+    df = client.generator.get_capital_costs()
     df = client.generator.get_max_installed_capacity()
 
     df = client.transmission.get_lifetime()

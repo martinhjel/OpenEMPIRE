@@ -218,7 +218,6 @@ def output(active_results: Path) -> None:
 
     st.plotly_chart(operational_results.plot_node_flow(df_operational_node))
 
-
     #########################
     st.header("Transmission")
     #########################
@@ -256,8 +255,9 @@ def output(active_results: Path) -> None:
     st.dataframe(average_price_df[selected_nodes].style.format("{:.2f}").background_gradient(cmap="Blues"))
 
     st.markdown("Import(+)/Export(-) [TWh/h]")
-    flow_df = key_metrics_results.total_flow(df_operational_node_all)/1e6
+    flow_df = key_metrics_results.total_flow(df_operational_node_all) / 1e6
     st.dataframe(flow_df[selected_nodes].style.format("{:.2f}").background_gradient(cmap="Blues"))
+
 
 if __name__ == "__main__":
     active_results = Path(
@@ -270,8 +270,3 @@ if __name__ == "__main__":
     input_client = EmpireInputClient(dataset_path=active_results / "Input/Xlsx")
 
     df = output_client.get_node_operational_values()
-
-    import pandas as pd
-
-
-    

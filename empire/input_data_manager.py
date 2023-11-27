@@ -66,13 +66,13 @@ class CapitalCostManager(IDataManager):
         self.capital_cost = capital_cost
 
     def apply(self) -> None:
-        df_capital_costs = self.client.generator.get_captial_costs()
+        df_capital_costs = self.client.generator.get_capital_costs()
         df_capital_costs.loc[
             df_capital_costs["GeneratorTechnology"] == self.generator_technology,
             "generatorCapitalCost in euro per kW",
         ] = self.capital_cost
 
-        self.client.generator.set_captial_costs(df_capital_costs)
+        self.client.generator.set_capital_costs(df_capital_costs)
 
 
 class MaxInstalledCapacityManager(IDataManager):

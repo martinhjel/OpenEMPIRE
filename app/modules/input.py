@@ -12,14 +12,12 @@ def input(active_results: Path):
 
     # Read config
     inital_year = st.select_slider("Initial year:", [2020, 2025], value=2020)
-    leap_years_investment=st.select_slider("Leap years for investments:", [i for i in range(1,11)], value=5)
-    forecast_horizon_year = st.select_slider("Horizon year:", [2050, 2055, 2060,2065,2070], value=2060)
-    n_periods = int((forecast_horizon_year-inital_year)/leap_years_investment)
+    leap_years_investment = st.select_slider("Leap years for investments:", [i for i in range(1, 11)], value=5)
+    forecast_horizon_year = st.select_slider("Horizon year:", [2050, 2055, 2060, 2065, 2070], value=2060)
+    n_periods = int((forecast_horizon_year - inital_year) / leap_years_investment)
     st.markdown(f"How many periods: {n_periods}")
 
-    periods_to_year_mapping = {
-        i + 1: inital_year + i * leap_years_investment for i in range(n_periods)
-    }
+    periods_to_year_mapping = {i + 1: inital_year + i * leap_years_investment for i in range(n_periods)}
 
     #### Input data
     input_client = EmpireInputClient(active_results / "Input/Xlsx")
@@ -74,7 +72,7 @@ def input(active_results: Path):
     ## Generator
     st.header("Generator data")
 
-    df = input_client.generator.get_captial_costs()
+    df = input_client.generator.get_capital_costs()
     df.loc[:, "Period"] = df.loc[:, "Period"].replace(periods_to_year_mapping)
     fig1 = px.line(
         df,
