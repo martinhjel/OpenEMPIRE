@@ -140,7 +140,8 @@ def run_empire_model(
             PICKLE_INSTANCE=empire_config.serialize_instance,
             EMISSION_CAP=empire_config.use_emission_cap,
             USE_TEMP_DIR=empire_config.use_temporary_directory,
-            LOADCHANGEMODULE=empire_config.load_change_module
+            LOADCHANGEMODULE=empire_config.load_change_module,
+            OPERATIONAL_DUALS=empire_config.compute_operational_duals,
         )
 
     config_path = run_config.dataset_path / "config.txt"

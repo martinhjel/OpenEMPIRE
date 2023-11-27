@@ -32,6 +32,7 @@ class EmpireConfiguration:
         moment_matching: bool,
         n_tree_compare: int,
         use_emission_cap: bool,
+        compute_operational_duals: bool,
         print_in_iamc_format: bool,
         write_in_lp_format: bool,
         serialize_instance: bool,
@@ -63,6 +64,7 @@ class EmpireConfiguration:
         :param moment_matching:
         :param n_tree_compare:
         :param use_emission_cap: If true, emissions in every scenario are capped according to the specified cap in ‘General.xlsx’. If false, the CO2-price specified in ‘General.xlsx’ applies.
+        :param compute_operational_duals: If true, investment decisions are fixed and resolved to compute operational duals
         :param print_in_iamc_format: OIf true, selected results are printed on the standard IAMC-format in addition to the normal EMPIRE print.
         :param write_in_lp_format: Problem should be written in Linear Programming format.
         :param serialize_instance: Serialize the data structure or model for later use.
@@ -90,6 +92,7 @@ class EmpireConfiguration:
         self.moment_matching = moment_matching
         self.n_tree_compare = n_tree_compare
         self.use_emission_cap = use_emission_cap
+        self.compute_operational_duals = compute_operational_duals
         self.print_in_iamc_format = print_in_iamc_format
         self.write_in_lp_format = write_in_lp_format
         self.serialize_instance = serialize_instance

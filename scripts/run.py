@@ -2,9 +2,9 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 from empire.core.config import EmpireConfiguration, read_config_file
+from empire.core.model_runner import run_empire_model, setup_run_paths
 from empire.input_client.client import EmpireInputClient
 from empire.logger import get_empire_logger
-from empire.core.model_runner import run_empire_model, setup_run_paths
 
 parser = ArgumentParser(description="A CLI script to run the Empire model.")
 
