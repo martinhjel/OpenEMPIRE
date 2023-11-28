@@ -82,8 +82,26 @@ class SetsClient(BaseClient):
     def set_horizon(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "Horizon")
 
+    def get_storage(self):
+        return self._read_from_sheet(self.file, "Storage")
+
+    def set_storage(self, df: pd.DataFrame):
+        self._write_to_sheet(df, self.file, "Storage")
+
     def get_technology(self):
         return self._read_from_sheet(self.file, "Technology")
+
+    def set_generators(self, df: pd.DataFrame):
+        self._write_to_sheet(df, self.file, "Generators")
+
+    def get_generators(self):
+        return self._read_from_sheet(self.file, "Generators")
+
+    def set_line_type(self, df: pd.DataFrame):
+        self._write_to_sheet(df, self.file, "LineType")
+
+    def get_line_type(self):
+        return self._read_from_sheet(self.file, "LineType")
 
     def set_technology(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "Technology")
@@ -248,7 +266,7 @@ class NodeClient(BaseClient):
         return self._read_from_sheet(self.file, "NodeLostLoadCost")
 
     def set_node_lost_load_cost(self, df: pd.DataFrame):
-        self._write_to_sheet(df, self.file, "NodeLostNodeCost")
+        self._write_to_sheet(df, self.file, "NodeLostLoadCost")
 
     def get_hydro_generators_max_annual_production(self):
         return self._read_from_sheet(self.file, "HydroGenMaxAnnualProduction", usecols=[0, 1])
@@ -340,6 +358,12 @@ class StorageClient(BaseClient):
     def set_power_capital_cost(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "PowerCapitalCost")
 
+    def get_power_fixed_om_cost(self):
+        return self._read_from_sheet(self.file, "PowerFixedOMCost", usecols=[0, 1, 2])
+
+    def set_power_fixed_om_cost(self, df: pd.DataFrame):
+        self._write_to_sheet(df, self.file, "PowerFixedOMCost")
+
     def get_power_max_built_capacity(self):
         return self._read_from_sheet(self.file, "PowerMaxBuiltCapacity", usecols=[0, 1, 2, 3])
 
@@ -351,6 +375,12 @@ class StorageClient(BaseClient):
 
     def set_energy_capital_cost(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "EnergyCapitalCost")
+
+    def get_energy_fixed_om_cost(self):
+        return self._read_from_sheet(self.file, "EnergyFixedOMCost", usecols=[0, 1, 2])
+
+    def set_energy_fixed_om_cost(self, df: pd.DataFrame):
+        self._write_to_sheet(df, self.file, "EnergyFixedOMCost")
 
     def get_initial_energy_capacity(self):
         return self._read_from_sheet(self.file, "EnergyInitialCapacity", usecols=[0, 1, 2, 3])
@@ -399,6 +429,12 @@ class StorageClient(BaseClient):
 
     def set_storage_power_to_energy(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "StoragePowToEnergy")
+
+    def get_storage_bleed_effiency(self):
+        return self._read_from_sheet(self.file, "StorageBleedEfficiency")
+
+    def set_storage_bleed_efficiency(self, df: pd.DataFrame):
+        self._write_to_sheet(df, self.file, "StorageBleedEfficiency")
 
     def get_lifetime(self):
         return self._read_from_sheet(self.file, "Lifetime")
