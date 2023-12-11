@@ -74,6 +74,34 @@ class CapitalCostManager(IDataManager):
 
         self.client.generator.set_capital_costs(df_capital_costs)
 
+class FixedOMCostManager(IDataManager):
+    """
+    Manager responsible for updating the fixed o&m cost for specific generator technologies within a  given dataset.
+    """
+
+    def __init__(self, client: EmpireInputClient, generator_technology: str, fixed_om_cost: float) -> None:
+        """
+        Initializes the FixedOMCostManager with the provided parameters.
+
+        Parameters:
+        -----------
+        :param client: The client interface for retrieving and setting generator data.
+        :param generator_technology: The specific generator technology to be updated.
+        :param fixed_om_cost: The new capital cost value to be set for the specified generator technology.
+        """
+        self.client = client
+        self.generator_technology = generator_technology
+        self.fixed_om_cost = fixed_om_cost
+
+    def apply(self) -> None:
+        df_fixed_om_costs = self.client.generator.get_capital_costs()
+        df_fixed_om_costs.loc[
+            df_fixed_om_costs["GeneratorTechnology"] == self.generator_technology,
+            "generatorCapitalCost in euro per kW",  # NB: Bug in dataset
+        ] = self.fixed_om_cost
+
+        self.client.generator.set_fixed_om_costs(df_fixed_om_costs)
+
 
 class MaxInstalledCapacityManager(IDataManager):
     """
