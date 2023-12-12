@@ -83,7 +83,7 @@ class SetsClient(BaseClient):
         self._write_to_sheet(df, self.file, "Horizon")
 
     def get_storage(self):
-        return self._read_from_sheet(self.file, "Storage")
+        return self._read_from_sheet(self.file, "Storage", usecols=[0,1])
 
     def set_storage(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "Storage")
@@ -95,7 +95,7 @@ class SetsClient(BaseClient):
         self._write_to_sheet(df, self.file, "Generators")
 
     def get_generators(self):
-        return self._read_from_sheet(self.file, "Generators")
+        return self._read_from_sheet(self.file, "Generators", usecols=[0, 1, 2, 3])
 
     def set_line_type(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "LineType")
@@ -110,7 +110,7 @@ class SetsClient(BaseClient):
         return self._read_from_sheet(self.file, "StorageOfNodes", usecols=[0, 1], skiprows=2)
 
     def set_storage_of_nodes(self, df: pd.DataFrame):
-        self._write_to_sheet(df, self.file, "StorageOfNodes")
+        self._write_to_sheet(df, self.file, "StorageOfNodes", startrow=2)
 
     def get_directional_lines(self):
         return self._read_from_sheet(self.file, "DirectionalLines", skiprows=2, usecols=[0, 1])
