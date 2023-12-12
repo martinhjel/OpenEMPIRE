@@ -199,7 +199,7 @@ def output(active_results: Path) -> None:
     df_operational_node = df_operational_node_all.query(f"Node == '{node}'")
 
     scenario = st.selectbox("Select scenario: ", df_operational_node["Scenario"].unique())
-
+    
     df_operational_trans = output_client.get_transmission_operational(node)
 
     col1, col2 = st.columns(2)
@@ -216,7 +216,16 @@ def output(active_results: Path) -> None:
     col1.plotly_chart(fig)
     col2.dataframe(df_capture_rate.style.format("{:.2f}").background_gradient(cmap="Blues"))
 
-    st.plotly_chart(operational_results.plot_node_flow(df_operational_node))
+    col1, col2 = st.columns(2)
+    col1.plotly_chart(operational_results.plot_node_flow(df_operational_node, node))
+    
+    col2.plotly_chart(operational_results.plot_storage_operation_values(df_operational_node, node=node, scenario=scenario, period=period))
+
+    try:
+        df_curtailed = output_client.get_curtailed_operational()
+        st.plotly_chart(operational_results.plot_curtailment_operational(df_curtailed, node, scenario, period))
+    except Exception as e:
+        st.error(f"Exception: {e}")
 
     #########################
     st.header("Transmission")
