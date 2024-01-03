@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 from empire.input_client.client import EmpireInputClient
+from empire.utils import scale_and_shift_series
 
 logger = logging.getLogger(__name__)
 
@@ -286,7 +287,13 @@ class ElectricLoadManager(IDataManager):
     """
 
     def __init__(
-        self, scenario_data_path: Path, node: str, scale: float, bias: float, datetime_format: str = "%d/%m/%Y %H:%M"
+        self,
+        client: EmpireInputClient,
+        scenario_data_path: Path,
+        node: str,
+        scale: float,
+        shift: float,
+        datetime_format: str = "%d/%m/%Y %H:%M",
     ) -> None:
         """
         Initializes the ElectricLoadManager with the provided parameters.
@@ -294,25 +301,43 @@ class ElectricLoadManager(IDataManager):
         Parameters:
         -----------
         :param client: The client interface for retrieving and setting generator data.
+        :param scenario_data_path: Path to where scenario data is stored.
         :param node: Node.
-        :param scale: Value to scale the load with.
-        :param bias: Value to shift the load profile with.
+        :param scale: Value to scale the existing load with.
+        :param shift: Value to shift the load with in MW.
         """
+        self.client = client
         self.scenario_data_path = scenario_data_path
         self.node = node
         self.scale = scale
-        self.bias = bias
+        self.shift = shift
         self.datetime_format = datetime_format
 
     def apply(self) -> None:
+        """
+        Shift the load profile, then adjust the annual demand. Note that load in the first period is used for scaling.
+        """
         df_electricload = pd.read_csv(self.scenario_data_path / "electricload.csv")
 
         if self.node not in df_electricload.columns[1:]:
             raise ValueError(f"Node {self.node} not found in 'electricload.csv'.")
 
-        df_electricload.loc[:, self.node] = df_electricload[self.node] * self.scale + self.bias
+        df_electric_annual_demand = self.client.nodes.get_electric_annual_demand()
 
-        logger.info(f"Scaling load in node {self.node} by {self.scale} and shifting by {self.bias}")
+        period = df_electric_annual_demand["Period"].unique()[0]  # NB! Scales only against the first period
+        cond = (df_electric_annual_demand["Nodes"] == self.node) & (df_electric_annual_demand["Period"] == period)
+
+        scale = self.scale * df_electric_annual_demand.loc[cond, "ElectricAdjustment in MWh per hour"][0] / 8760
+
+        df_electric_annual_demand.loc[cond, "ElectricAdjustment in MWh per hour"] = (scale + self.shift) * 8760
+
+        df_electricload.loc[:, self.node] = scale_and_shift_series(
+            df_electricload[self.node], scale=scale, shift=self.shift
+        )
+
+        self.client.nodes.set_electric_annual_demand(df_electric_annual_demand)
+
+        logger.info(f"Scaling load in node {self.node} by {self.scale} and shifting by {self.shift}")
         df_electricload.to_csv(
             self.scenario_data_path / "electricload.csv", index=False, date_format=self.datetime_format
         )
