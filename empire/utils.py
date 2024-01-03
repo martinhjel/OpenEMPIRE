@@ -17,6 +17,26 @@ def copy_dataset(src_path: Path, dest_path: Path):
     for file in ["General", "Generator", "Node", "Sets", "Storage", "Transmission"]:
         shutil.copyfile(src_path / f"{file}.xlsx", dest_path / f"{file}.xlsx")
 
+    
+def copy_scenario_data(base_dataset, scenario_data_path, use_scenario_generation, use_fixed_sample):
+    """
+    Copy scenario data from base dataset to active Empire dataset.
+
+    :param base_dataset: path to base Empire dataset.
+    :param scenario_data_path: path to scenario data in active Empire dataset.
+    :param use_scenario_generation: Compute new scenarios or not.
+    :param use_fixed_sample: Use fixed samples or not.
+    """
+    for csv_file in (base_dataset/"ScenarioData").glob("*.csv"):
+        
+        if csv_file.name == "samling_key.csv" and not use_fixed_sample:
+            continue
+        
+        shutil.copyfile(csv_file, scenario_data_path/csv_file.name)
+    
+    if not use_scenario_generation:
+        for tab_file in (base_dataset/"ScenarioData").glob("*.tab"):
+            shutil.copyfile(tab_file, scenario_data_path/csv_file.name)
 
 def copy_file(src_file: Path, dest_file: Path):
     """

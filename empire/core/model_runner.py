@@ -6,10 +6,10 @@ from pathlib import Path
 
 from empire import run_empire
 from empire.core.config import EmpireConfiguration, EmpireRunConfiguration, read_config_file
-from empire.input_data_manager import IDataManager
 from empire.core.reader import generate_tab_files
 from empire.core.scenario_random import check_scenarios_exist_and_copy, generate_random_scenario
-from empire.utils import copy_dataset, create_if_not_exist, get_run_name
+from empire.input_data_manager import IDataManager
+from empire.utils import copy_dataset, copy_scenario_data, create_if_not_exist, get_run_name
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +87,7 @@ def run_empire_model(
     logger.info("++++++++")
     logger.info("+EMPIRE+")
     logger.info("++++++++")
-    logger.info('Load Change Module: %s', str(empire_config.load_change_module))
+    logger.info("Load Change Module: %s", str(empire_config.load_change_module))
     logger.info("Solver: %s", empire_config.optimization_solver)
     logger.info("Scenario Generation: %s", str(use_scen_generation))
     logger.info("++++++++")
@@ -104,7 +104,7 @@ def run_empire_model(
                 scenario_data_path=scenario_data_path,
                 tab_file_path=tab_file_path,
             )
-            
+
     else:
         if not empire_config.use_fixed_sample:
             logger.warning(
@@ -174,10 +174,16 @@ def setup_run_paths(
     input_path = create_if_not_exist(run_path / "Input")
     xlsx_path = create_if_not_exist(input_path / "Xlsx")
     tab_path = create_if_not_exist(input_path / "Tab")
-    scenario_data_path = base_dataset / "ScenarioData"
+    scenario_data_path = create_if_not_exist(xlsx_path / "ScenarioData")
 
     # Copy base dataset to input folder
     copy_dataset(base_dataset, xlsx_path)
+    copy_scenario_data(
+        base_dataset=base_dataset,
+        scenario_data_path=scenario_data_path,
+        use_scenario_generation=empire_config.use_scenario_generation,
+        use_fixed_sample=empire_config.use_fixed_sample,
+    )
 
     # Output folders
     results_path = create_if_not_exist(run_path / "Output")
