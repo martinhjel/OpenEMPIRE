@@ -150,6 +150,19 @@ class EmpireConfiguration:
 
         # Create an instance of the class with the arguments
         return cls(**init_args)
+    
+    def to_dict(self) -> dict:
+        """
+        Used for serialization.
+
+        :return: dictionary
+        """
+        my_dict = self.__dict__
+        for k in my_dict:
+            if isinstance(my_dict[k], Path):
+                my_dict[k] = str(my_dict[k])
+                
+        return my_dict
 
 
 class EmpireRunConfiguration:
@@ -160,6 +173,7 @@ class EmpireRunConfiguration:
         tab_path: Path | str,
         scenario_data_path: Path | str,
         results_path: Path | str,
+        empire_path: Path | str = Path.cwd(),
     ):
         """
         Class containing configurations for running Empire simulations.
@@ -169,6 +183,7 @@ class EmpireRunConfiguration:
         :param tab_path: Folder containing the .tab files.
         :param scenario_data_path: Folder containing the scenario data.
         :param results_path: Folder where the results should reside.
+        :param empire_path: Path to empire project, default is current working directory.
         """
 
         self.run_name = run_name
@@ -176,6 +191,7 @@ class EmpireRunConfiguration:
         self.tab_file_path = Path(tab_path)
         self.scenario_data_path = Path(scenario_data_path)
         self.results_path = Path(results_path)
+        self.empire_path = Path(empire_path)
 
         # Validate the configuration
         self.validate()
@@ -184,7 +200,8 @@ class EmpireRunConfiguration:
         """
         Validates the configuration. Raises an error if the configuration is invalid.
         """
-        pass
+        if not self.empire_path.exists():
+            raise ValueError(f"{self.empire_path} does not exists.")
 
     @classmethod
     def from_dict(cls, config: dict) -> "EmpireRunConfiguration":

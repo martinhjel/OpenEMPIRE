@@ -81,7 +81,7 @@ def run_empire_model(
         )
     ]
     HoursOfSeason = HoursOfRegSeason + HoursOfPeakSeason
-    with open(Path.cwd() / "config/countries.json", "r", encoding="utf-8") as file:
+    with open(run_config.empire_path / "config/countries.json", "r", encoding="utf-8") as file:
         dict_countries = json.load(file)
 
     logger.info("++++++++")
@@ -147,13 +147,14 @@ def run_empire_model(
     config_path = run_config.dataset_path / "config.txt"
     logger.info("Writing config to: %s", config_path)
     with open(config_path, "w", encoding="utf-8") as file:
-        pprint.pprint(empire_config.__dict__, stream=file, indent=4, width=80)
+        json.dump(empire_config.to_dict(), file, ensure_ascii=False, indent=4)
 
 
 def setup_run_paths(
     version: str,
     empire_config: EmpireConfiguration,
     run_path: Path,
+    empire_path: Path = Path.cwd(),
 ) -> EmpireRunConfiguration:
     """
     Setup run paths for Empire.
@@ -161,13 +162,12 @@ def setup_run_paths(
     :param version: dataset version.
     :param empire_config: Empire configuration.
     :param run_path: Path containing input and output to the empire run.
-    :param scenario_data: Path to scenario data, optional.
-    :param sampling_key_path: Path to sampled keys for scenario generation, optional.
+    :param empire_path: Path to empire project, optional.
     :return: Empire run configuration.
     """
 
     # Original dataset
-    base_dataset = Path.cwd() / f"Data handler/{version}"
+    base_dataset = empire_path / f"Data handler/{version}"
 
     # Input folders
     run_name = get_run_name(empire_config=empire_config, version=version)
@@ -194,6 +194,7 @@ def setup_run_paths(
         tab_path=tab_path,
         scenario_data_path=scenario_data_path,
         results_path=results_path,
+        empire_path=empire_path,
     )
 
 
