@@ -37,7 +37,7 @@ def copy_scenario_data(base_dataset, scenario_data_path, use_scenario_generation
 
     if not use_scenario_generation:
         for tab_file in (base_dataset / "ScenarioData").glob("*.tab"):
-            shutil.copyfile(tab_file, scenario_data_path / csv_file.name)
+            shutil.copyfile(tab_file, scenario_data_path / tab_file.name)
 
 
 def copy_file(src_file: Path, dest_file: Path):
