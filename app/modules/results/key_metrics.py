@@ -57,7 +57,7 @@ class KeyMetricsResults:
         ]
         nodes = df_sum.index.to_list()
         selected_nodes = st.multiselect(
-            "Select nodes: ", options=df_sum.index, default=[item for item in default_nodes if item in nodes]
+            "Select nodes:       ", options=df_sum.index, default=[item for item in default_nodes if item in nodes]
         )
         selected_generators = st.multiselect(
             "Select generators: ", options=df_sum.columns, default=df_sum.columns.tolist()
