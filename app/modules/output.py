@@ -8,6 +8,7 @@ import streamlit as st
 from app.modules.results.key_metrics import KeyMetricsResults
 from app.modules.results.node import NodeResults
 from app.modules.results.operational import OperationalResults
+from empire.core.config import EmpireConfiguration, read_config_file
 from empire.input_client.client import EmpireInputClient
 from empire.output_client.client import EmpireOutputClient
 from empire.results.maps import plot_built_transmission_capacity
@@ -26,11 +27,20 @@ def profile_function(func):
     return wrapper
 
 
+# active_results = Path("/Users/martihj/gitsource/OpenEMPIRE/Results/1_node_baseload/ncc_5000_co2_150_scale_1.0_shift-10")
+# active_results = Path("/Users/martihj/gitsource/OpenEMPIRE/Results/norway_analysis/ncc4000.0_na0.95_w200000.0_wog200000.0_pTrue")
+
+
 # @profile_function
 def output(active_results: Path) -> None:
     st.title("Results")
     output_client = EmpireOutputClient(output_path=active_results / "Output")
     input_client = EmpireInputClient(dataset_path=active_results / "Input/Xlsx")
+
+    # config_file = active_results / "Input/Xlsx/config.txt"
+    config_file = Path.cwd() / "config/run.yaml"
+    config = read_config_file(config_file)
+    empire_config = EmpireConfiguration.from_dict(config=config)
 
     df = output_client.get_curtailed_production()
     st.sidebar.markdown("______________")
@@ -187,6 +197,8 @@ def output(active_results: Path) -> None:
     col1.plotly_chart(node_results.plot_storage_values(col1))
     col2.plotly_chart(node_results.plot_storage_values_line(col2))
 
+    node_results.visualize_built_capacity_in_nodes()
+
     ################################
     st.header("Operational results")
     ################################
@@ -196,10 +208,22 @@ def output(active_results: Path) -> None:
     node = st.selectbox("Select node: ", nodes, index=nodes.index("NO2") if "NO2" in nodes else 0)
 
     df_operational_node_all = output_client.get_node_operational_values()
+    discount_prices = st.sidebar.toggle("Discount prices to present value", value=True)
+    if not discount_prices:
+        years_to_period_mapping = {
+            f"{2020 + i*empire_config.leap_years_investment}-{2020+empire_config.leap_years_investment+i*empire_config.leap_years_investment}": i
+            for i in range(empire_config.n_periods)
+        }
+        df_operational_node_all.loc[:, "Price_EURperMWh"] = df_operational_node_all.apply(
+            lambda x: x["Price_EURperMWh"]
+            * (1 + empire_config.discount_rate) ** (years_to_period_mapping[x["Period"]]),
+            axis=1,
+        )
+
     df_operational_node = df_operational_node_all.query(f"Node == '{node}'")
 
     scenario = st.selectbox("Select scenario: ", df_operational_node["Scenario"].unique())
-    
+
     df_operational_trans = output_client.get_transmission_operational(node)
 
     col1, col2 = st.columns(2)
@@ -218,8 +242,12 @@ def output(active_results: Path) -> None:
 
     col1, col2 = st.columns(2)
     col1.plotly_chart(operational_results.plot_node_flow(df_operational_node, node))
-    
-    col2.plotly_chart(operational_results.plot_storage_operation_values(df_operational_node, node=node, scenario=scenario, period=period))
+
+    col2.plotly_chart(
+        operational_results.plot_storage_operation_values(
+            df_operational_node, node=node, scenario=scenario, period=period
+        )
+    )
 
     try:
         df_curtailed = output_client.get_curtailed_operational()
@@ -279,3 +307,11 @@ if __name__ == "__main__":
     input_client = EmpireInputClient(dataset_path=active_results / "Input/Xlsx")
 
     df = output_client.get_node_operational_values()
+
+    node = "Node1"
+    scenario = "scenario1"
+    period = "2020-2025"
+
+# %%
+
+# operational_results.plot_storage_operation_values(df_operational_node, node=node, scenario=scenario, period=period)
