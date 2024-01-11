@@ -317,4 +317,6 @@ class NodeResults:
         
         for node in selected_nodes:
             df_built = self.get_build_technology_by_node(df_gen=df_gen, node=node)
-            st.dataframe(df_built.round(0).style.format("{:.2f}").background_gradient(cmap="Blues"))
+            st.write(f"Built capacity [GW] in {node}")
+            df_built.columns = df_built.columns.get_level_values(1)
+            st.dataframe((df_built.round(0)/1e3).style.format("{:.2f}").background_gradient(cmap="Blues"))
