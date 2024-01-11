@@ -8,6 +8,11 @@ class KeyMetricsResults:
 
     def generators(self, period):
         df = self.output_client.get_generators_values()
+        df.loc[:,"genInvCap_MW"] /= 1e3
+        df.loc[:,"genInstalledCap_MW"] /= 1e3 
+        
+        df = df.rename(columns = {"genInvCap_MW": "genInvCap_GW", "genInstalledCap_MW": "genInstalledCap_GW"})
+        
         df.loc[df["genExpectedAnnualProduction_GWh"] < 1, "genExpectedCapacityFactor"] = 0.0
         df_temp = df[["Node", "GeneratorType", "Period", "genExpectedAnnualProduction_GWh"]]
         df["TotalGeneration_GWh"] = df_temp.groupby(["Node", "Period"])["genExpectedAnnualProduction_GWh"].transform(
@@ -15,14 +20,14 @@ class KeyMetricsResults:
         )
         df["GenerationShare_Percent"] = (df["genExpectedAnnualProduction_GWh"] / df["TotalGeneration_GWh"]) * 100
 
-        df_temp = df[["Node", "GeneratorType", "Period", "genInstalledCap_MW"]]
-        df["TotalCapacity_MW"] = df_temp.groupby(["Node", "Period"])["genInstalledCap_MW"].transform("sum")
-        df["CapacityShare_Percent"] = (df["genInstalledCap_MW"] / df["TotalGeneration_GWh"]) * 100
+        df_temp = df[["Node", "GeneratorType", "Period", "genInstalledCap_GW"]]
+        df["TotalCapacity_GW"] = df_temp.groupby(["Node", "Period"])["genInstalledCap_GW"].transform("sum")
+        df["CapacityShare_Percent"] = (df["genInstalledCap_GW"] / df["TotalCapacity_GW"]) * 100
 
         # Select measure
         measures = [
-            "genInvCap_MW",
-            "genInstalledCap_MW",
+            "genInvCap_GW",
+            "genInstalledCap_GW",
             "genExpectedCapacityFactor",
             "DiscountedInvestmentCost_Euro",
             "genExpectedAnnualProduction_GWh",
