@@ -5,7 +5,9 @@ import streamlit as st
 
 from empire.input_client.client import EmpireInputClient
 from empire.results.maps import plot_max_transmission_capacity, plot_nodes_and_lines, plot_transmission
+from empire.core.config import read_config_file, EmpireConfiguration
 
+#active_results = [i for i in (Path.cwd() / "Results/1_node").glob("*")][-1]
 
 def input(active_results: Path):
     st.title("Input")
@@ -13,7 +15,7 @@ def input(active_results: Path):
     # Read config
     inital_year = st.select_slider("Initial year:", [2020, 2025], value=2020)
     leap_years_investment = st.select_slider("Leap years for investments:", [i for i in range(1, 11)], value=5)
-    forecast_horizon_year = st.select_slider("Horizon year:", [2050, 2055, 2060, 2065, 2070], value=2060)
+    forecast_horizon_year = st.select_slider("Horizon year:", [2025, 2050, 2055, 2060, 2065, 2070], value=2060)
     n_periods = int((forecast_horizon_year - inital_year) / leap_years_investment)
     st.markdown(f"How many periods: {n_periods}")
 
@@ -21,6 +23,10 @@ def input(active_results: Path):
 
     #### Input data
     input_client = EmpireInputClient(active_results / "Input/Xlsx")
+
+    config_file = active_results / "Input/Xlsx/config.txt"
+    config = read_config_file(config_file)
+    empire_config = EmpireConfiguration.from_dict(config=config)
 
     st.sidebar.markdown("______________")
     st.sidebar.markdown("__Page filter:__")
@@ -41,6 +47,7 @@ def input(active_results: Path):
         y="ElectricAdjustment in MWh per hour",
         color="Nodes",
         title="Annual Electric load",
+        markers=True,
     )
 
     df = input_client.nodes.get_node_lost_load_cost()
@@ -80,15 +87,22 @@ def input(active_results: Path):
         y="generatorCapitalCost in euro per kW",
         color="GeneratorTechnology",
         title="Generator Capital Cost",
+        markers=True,
     )
+    
     df = input_client.generator.get_fixed_om_costs()
     df.loc[:, "Period"] = df.loc[:, "Period"].replace(periods_to_year_mapping)
+    y = "generatorFixedOMCost in euro per kW"
+    if y not in df.columns: # NB: Bug in excel sheet
+        y = "generatorCapitalCost in euro per kW"
+
     fig2 = px.line(
         df,
         x="Period",
-        y="generatorCapitalCost in euro per kW",
+        y=y,
         color="GeneratorTechnology",
         title="Generator Fixed O&M Costs",
+        markers=True,
     )
     col1, col2 = st.columns(2)
     col1.plotly_chart(fig1)
@@ -109,6 +123,7 @@ def input(active_results: Path):
         y="generatorTypeFuelCost in euro per GJ",
         color="GeneratorTechnology",
         title="Generator Fuel Cost",
+        markers=True,
     )
     col1, col2 = st.columns(2)
     col1.plotly_chart(fig1)
@@ -121,7 +136,8 @@ def input(active_results: Path):
         x="Period",
         y="generatorEfficiency",
         color="GeneratorTechnology",
-        title="Generator Fuel Cost",
+        title="Generator Efficiency",
+        markers=True,
     )
     df = input_client.generator.get_generator_type_availability()
     fig2 = px.bar(
@@ -309,6 +325,7 @@ def input(active_results: Path):
         y="PowerCapitalCost in euro per kW",
         color="StorageTypes",
         title="Storage Power Capital Cost",
+        markers=True,
     )
     df = input_client.storage.get_energy_capital_cost()
     df.loc[:, "Period"] = df.loc[:, "Period"].replace(periods_to_year_mapping)
@@ -317,7 +334,8 @@ def input(active_results: Path):
         x="Period",
         y="EnergyCapitalCost in euro per kWh",
         color="StorageTypes",
-        title="Storage Power Capital Cost",
+        title="Storage Energy Capital Cost",
+        markers=True,
     )
     col1, col2 = st.columns(2)
     col1.plotly_chart(fig1)
@@ -332,6 +350,7 @@ def input(active_results: Path):
         color="Nodes",
         line_group="StorageTypes",
         title="Initial Power Capacity",
+        markers=True,
     )
     df = input_client.storage.get_initial_energy_capacity()
     df.loc[:, "Period"] = df.loc[:, "Period"].replace(periods_to_year_mapping)
@@ -342,6 +361,7 @@ def input(active_results: Path):
         color="Nodes",
         line_group="StorageTypes",
         title="Initial Energy Capacity",
+        markers=True,
     )
     col1, col2 = st.columns(2)
     col1.plotly_chart(fig1)
@@ -424,3 +444,43 @@ def input(active_results: Path):
     fig.update_layout(title=f"Max Transmission Capacity, {period}")
 
     st.plotly_chart(fig)
+    
+    # General data
+    st.header("General data")    
+    
+    if empire_config.use_emission_cap:
+        st.markdown("The case uses the following CO2 cap:")
+        
+        df = input_client.general.get_co2_cap()
+        df.loc[:, "Period"] = df.loc[:, "Period"].replace(periods_to_year_mapping)
+        fig1 = px.bar(
+            df,
+            x="Period",
+            y="CO2Cap [in Mton CO2eq]",
+            title="CO2 Cap",
+        )
+        st.plotly_chart(fig1)
+    else:
+        st.markdown("The case uses the following CO2 price:")
+        
+        df = input_client.general.get_co2_price()
+        df.loc[:, "Period"] = df.loc[:, "Period"].replace(periods_to_year_mapping)
+        fig1 = px.bar(
+            df,
+            x="Period",
+            y="CO2price in euro per tCO2",
+            title="CO2 Price",
+        )
+    
+        st.plotly_chart(fig1)
+    
+    
+    df = input_client.general.get_season_scale()
+    fig1 = px.bar(
+        df,
+        x="Season",
+        y="seasonScale",
+        title="Seasonal scaling",
+    )
+    
+    st.plotly_chart(fig1)
