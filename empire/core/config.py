@@ -117,8 +117,7 @@ class EmpireConfiguration:
         """
         Validates the configuration. Raises an error if the configuration is invalid.
         """
-        if not self.temporary_directory.exists():
-            self.temporary_directory.mkdir(parents=True)
+        pass
 
     @classmethod
     def from_dict(cls, config: Dict) -> "EmpireConfiguration":
