@@ -430,7 +430,7 @@ class StorageClient(BaseClient):
     def set_storage_power_to_energy(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "StoragePowToEnergy")
 
-    def get_storage_bleed_effiency(self):
+    def get_storage_bleed_efficiency(self):
         return self._read_from_sheet(self.file, "StorageBleedEfficiency")
 
     def set_storage_bleed_efficiency(self, df: pd.DataFrame):
