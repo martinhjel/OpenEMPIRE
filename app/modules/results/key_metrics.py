@@ -1,18 +1,20 @@
+import pandas as pd
 import streamlit as st
 
 
 class KeyMetricsResults:
-    def __init__(self, output_client, input_client):
+    def __init__(self, output_client, input_client, empire_config):
         self.output_client = output_client
         self.input_client = input_client
+        self.empire_config = empire_config
 
     def generators(self, period):
         df = self.output_client.get_generators_values()
-        df.loc[:,"genInvCap_MW"] /= 1e3
-        df.loc[:,"genInstalledCap_MW"] /= 1e3 
-        
-        df = df.rename(columns = {"genInvCap_MW": "genInvCap_GW", "genInstalledCap_MW": "genInstalledCap_GW"})
-        
+        df.loc[:, "genInvCap_MW"] /= 1e3
+        df.loc[:, "genInstalledCap_MW"] /= 1e3
+
+        df = df.rename(columns={"genInvCap_MW": "genInvCap_GW", "genInstalledCap_MW": "genInstalledCap_GW"})
+
         df.loc[df["genExpectedAnnualProduction_GWh"] < 1, "genExpectedCapacityFactor"] = 0.0
         df_temp = df[["Node", "GeneratorType", "Period", "genExpectedAnnualProduction_GWh"]]
         df["TotalGeneration_GWh"] = df_temp.groupby(["Node", "Period"])["genExpectedAnnualProduction_GWh"].transform(
@@ -108,3 +110,33 @@ class KeyMetricsResults:
         df_t = df.groupby(["Node", "Period"])[["FlowOut_MW", "FlowIn_MW"]].sum().reset_index()
         df_t["FlowTotal_MW"] = df_t["FlowOut_MW"] + df_t["FlowIn_MW"]
         return df_t.pivot(index="Period", columns="Node", values="FlowTotal_MW")
+
+    def compute_discounted_marginal_cost(self) -> pd.DataFrame:
+        """
+        Compute the discounted marginal costs. If npv_discounted==True, this is the marginal cost in the objective
+        function of Empire. Hence it can be used to verify which units are the marginal units and hence
+        setting the electricity price in the different nodes (unless it is import/storage).
+
+        :return: Dataframe
+        """
+
+        period_to_year_mapping = {}
+        for i in range(self.empire_config.n_periods):
+            year_from = 2020 + i * self.empire_config.leap_years_investment
+            year_to = year_from + self.empire_config.leap_years_investment
+            period_to_year_mapping[i + 1] = f"{year_from}-{year_to}"
+        
+        df_marginal_costs = pd.read_csv(self.output_client.output_path / "marginal_costs.csv")
+        df_marginal_costs.loc[:, "Period"] = df_marginal_costs.loc[:, "Period"].replace(period_to_year_mapping)
+        df_mc = df_marginal_costs.pivot(columns="Generator", index="Period", values="MarginalCost_EurperMWh")
+
+        # Discount to PV
+        discout_mapper = {
+            period: (1 + self.empire_config.discount_rate) ** (-self.empire_config.leap_years_investment * i)
+            for i, period in enumerate(df_mc.index.get_level_values("Period").unique().sort_values())
+        }
+
+        discounting = df_mc.index.get_level_values("Period").map(discout_mapper).values
+        df_mc = df_mc.mul(discounting, axis=0)
+
+        return df_mc

@@ -280,7 +280,7 @@ def output(active_results: Path) -> None:
     ########################
     st.header("Key Metrics")
     ########################
-    key_metrics_results = KeyMetricsResults(output_client=output_client, input_client=input_client)
+    key_metrics_results = KeyMetricsResults(output_client=output_client, input_client=input_client, empire_config=empire_config)
 
     df_sum, measure, selected_nodes = key_metrics_results.generators(period)
     st.markdown(f"{measure} for {period}:")
@@ -294,6 +294,10 @@ def output(active_results: Path) -> None:
     st.markdown("Import(+)/Export(-) [TWh/h]")
     flow_df = key_metrics_results.total_flow(df_operational_node_all) / 1e6
     st.dataframe(flow_df[selected_nodes].style.format("{:.2f}").background_gradient(cmap="Blues"))
+    
+    st.markdown("Marginal prices for generators")
+    df_mc = key_metrics_results.compute_discounted_marginal_cost()
+    st.dataframe(df_mc.style.format("{:.2f}").background_gradient(cmap="Blues"))
 
 
 if __name__ == "__main__":
