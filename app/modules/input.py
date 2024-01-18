@@ -3,11 +3,12 @@ from pathlib import Path
 import plotly.express as px
 import streamlit as st
 
+from empire.core.config import EmpireConfiguration, read_config_file
 from empire.input_client.client import EmpireInputClient
 from empire.results.maps import plot_max_transmission_capacity, plot_nodes_and_lines, plot_transmission
-from empire.core.config import read_config_file, EmpireConfiguration
 
-#active_results = [i for i in (Path.cwd() / "Results/1_node").glob("*")][-1]
+# active_results = [i for i in (Path.cwd() / "Results/1_node").glob("*")][-1]
+
 
 def input(active_results: Path):
     st.title("Input")
@@ -89,11 +90,11 @@ def input(active_results: Path):
         title="Generator Capital Cost",
         markers=True,
     )
-    
+
     df = input_client.generator.get_fixed_om_costs()
     df.loc[:, "Period"] = df.loc[:, "Period"].replace(periods_to_year_mapping)
     y = "generatorFixedOMCost in euro per kW"
-    if y not in df.columns: # NB: Bug in excel sheet
+    if y not in df.columns:  # NB: Bug in excel sheet
         y = "generatorCapitalCost in euro per kW"
 
     fig2 = px.line(
@@ -232,13 +233,23 @@ def input(active_results: Path):
     col2.plotly_chart(fig2)
 
     df = input_client.generator.get_ramp_rate()
-    fig = px.bar(
+    fig1 = px.bar(
         df,
         x="ThermalGenerators",
         y="RampRate",
         title="Ramp Rate of Thermal Generators from one Hour to the Next",
     )
-    st.plotly_chart(fig)
+    df = input_client.generator.get_ref_initial_capacity()
+    fig2 = px.bar(
+        df,
+        x="GeneratorTechnology",
+        y="generatoReferenceInitialCapacity in MW",
+        color="Node",
+        title="Initial capacity",
+    )
+    col1, col2 = st.columns(2)
+    col1.plotly_chart(fig1)
+    col2.plotly_chart(fig2)
 
     ## Sets
     st.header("Sets data")
@@ -444,13 +455,13 @@ def input(active_results: Path):
     fig.update_layout(title=f"Max Transmission Capacity, {period}")
 
     st.plotly_chart(fig)
-    
+
     # General data
-    st.header("General data")    
-    
+    st.header("General data")
+
     if empire_config.use_emission_cap:
         st.markdown("The case uses the following CO2 cap:")
-        
+
         df = input_client.general.get_co2_cap()
         df.loc[:, "Period"] = df.loc[:, "Period"].replace(periods_to_year_mapping)
         fig1 = px.bar(
@@ -462,7 +473,7 @@ def input(active_results: Path):
         st.plotly_chart(fig1)
     else:
         st.markdown("The case uses the following CO2 price:")
-        
+
         df = input_client.general.get_co2_price()
         df.loc[:, "Period"] = df.loc[:, "Period"].replace(periods_to_year_mapping)
         fig1 = px.bar(
@@ -471,10 +482,9 @@ def input(active_results: Path):
             y="CO2price in euro per tCO2",
             title="CO2 Price",
         )
-    
+
         st.plotly_chart(fig1)
-    
-    
+
     df = input_client.general.get_season_scale()
     fig1 = px.bar(
         df,
@@ -482,5 +492,5 @@ def input(active_results: Path):
         y="seasonScale",
         title="Seasonal scaling",
     )
-    
+
     st.plotly_chart(fig1)
