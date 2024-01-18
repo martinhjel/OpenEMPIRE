@@ -815,6 +815,16 @@ def run_empire(name, tab_file_path: Path, result_file_path: Path, scenario_data_
             writer.writerow([g, i, value(instance.genMargCost[g,i])])
 
     f.close()
+    
+    # Write investment costs to results folder
+    f = open(result_file_path / 'investment_costs.csv', 'w', newline='')
+    writer = csv.writer(f)
+    writer.writerow(["Generator","Period","InvestmentCost_EurperMW"])
+    for g in instance.Generator:
+        for i in instance.PeriodActive:
+            writer.writerow([g, i, value(instance.genInvCost[g,i])])
+
+    f.close()
 
     logger.info("Solving...")
 
@@ -906,7 +916,7 @@ def run_empire(name, tab_file_path: Path, result_file_path: Path, scenario_data_
 
     f = open(result_file_path / 'results_output_transmision.csv', 'w', newline='')
     writer = csv.writer(f)
-    writer.writerow(["BetweenNode","AndNode","Period","transmisionInvCap_MW","transmissionInstalledCap_MW","DiscountedInvestmentCost_EuroPerMW","transmisionExpectedAnnualVolume_GWh","ExpectedAnnualLosses_GWh"])
+    writer.writerow(["BetweenNode","AndNode","Period","transmisionInvCap_MW","transmissionInstalledCap_MW","DiscountedInvestmentCost_Euro","transmisionExpectedAnnualVolume_GWh","ExpectedAnnualLosses_GWh"])
     for (n1,n2) in instance.BidirectionalArc:
         for i in instance.PeriodActive:
             writer.writerow([
@@ -1263,7 +1273,7 @@ def run_empire(name, tab_file_path: Path, result_file_path: Path, scenario_data_
         f.to_csv(result_file_path / 'IAMC/empire_iamc.csv', index=None)
 
     if OPERATIONAL_DUALS:
-        logger.info("Computing operatinal dual values by fixing investment variables and resolving.")
+        logger.info("Computing operational dual values by fixing investment variables and resolving.")
 
         logger.info("Fixing investment variables")
         for (n,g) in instance.GeneratorsOfNode:
@@ -1283,7 +1293,7 @@ def run_empire(name, tab_file_path: Path, result_file_path: Path, scenario_data_
 
         opt.solve(instance, tee=True, logfile=result_file_path / f"logfile_{name}_resolved.log")
 
-        logger.info("Saving new duals to file")
+        logger.info("Writing new operational results to .csv..")
 
         f = open(result_file_path / 'results_output_Operational_resolved.csv', 'w', newline='')
         writer = csv.writer(f)
