@@ -5,12 +5,17 @@ import pandas as pd
 
 from empire.input_client.client import EmpireInputClient
 from empire.input_client.sheets_structure import sheets
+from empire.input_client.utils import create_empty_empire_dataset
 
 dataset_name = "1_node"
+# periods = [1,2]
 dataset_path = Path.cwd() / f"Data handler/{dataset_name}"
 existing_dataset_path = Path.cwd() / "Data handler/test"
 
 existing_input_client = EmpireInputClient(dataset_path=existing_dataset_path)
+
+if not dataset_path.exists():
+    create_empty_empire_dataset(dataset_path)
 new_input_client = EmpireInputClient(dataset_path=dataset_path)
 
 # Create excel files
@@ -513,7 +518,7 @@ columns = ["StorageType", "storagePowToEnergy"]
 storage_power_to_energy_data = [["DummyStorage", 1.0]]
 df_storage_power_to_energy = pd.DataFrame(storage_power_to_energy_data, columns=columns)
 
-df_storage_bleed_efficiency = existing_input_client.storage.get_storage_bleed_effiency()
+df_storage_bleed_efficiency = existing_input_client.storage.get_storage_bleed_efficiency()
 columns = ["StorageType", "storageBleedEff"]
 storage_bleed_efficiency_data = [["Hydro Pump Storage", 1.0]]
 df_storage_bleed_efficiency = pd.DataFrame(storage_bleed_efficiency_data, columns=columns)
@@ -642,3 +647,36 @@ if __name__ == "__main__":
     )
     fig.update_layout(template="plotly")
     fig.show()
+
+
+    scale=100
+    delta=10
+
+    df_adjusted = (scale + delta/df_electricload["Node1"])*df_electricload["Node1"]
+    df_adjusted = df_adjusted/df_adjusted.max()
+
+    fig = go.Figure(
+        data=[
+            # go.Scatter(y=df_electricload["Node1"]*110, name="Base-load"),
+            go.Scatter(y=df_electricload["Node1"], name="Base-load"),
+            go.Scatter(y=df_adjusted, name="Adj"),
+            go.Scatter(y=(scale + delta/df_electricload["Node1"])*df_electricload["Node1"], name="Shift")
+        ]
+    )
+    fig.update_layout(template="plotly")
+    fig.show()
+
+    
+    (df_electricload["Node1"]*100).mean()
+    (df_electricload["Node1"]*100).std()
+    (df_electricload["Node1"]*110).mean()
+    (df_electricload["Node1"]*110).std()
+    
+    ((scale + delta/df_electricload["Node1"])*df_electricload["Node1"]).mean()
+    ((scale + delta/df_electricload["Node1"])*df_electricload["Node1"]).std()
+    
+
+    (df_adjusted*(scale+delta)).mean() == (df_electricload["Node1"]*scale+delta).mean()
+    (df_adjusted*(scale+delta)).std() == (df_electricload["Node1"]*scale+delta).std()
+    
+    
