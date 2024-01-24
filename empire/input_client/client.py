@@ -83,7 +83,7 @@ class SetsClient(BaseClient):
         self._write_to_sheet(df, self.file, "Horizon")
 
     def get_storage(self):
-        return self._read_from_sheet(self.file, "Storage", usecols=[0,1])
+        return self._read_from_sheet(self.file, "Storage", usecols=[0, 1])
 
     def set_storage(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "Storage")
@@ -308,12 +308,14 @@ class TransmissionClient(BaseClient):
         return self._read_from_sheet(self.file, "TypeCapitalCost")
 
     def set_type_capital_cost(self, df: pd.DataFrame):
+        df = self._order_type_and_period(df)
         self._write_to_sheet(df, self.file, "TypeCapitalCost")
 
     def get_type_fixed_om_cost(self):
         return self._read_from_sheet(self.file, "TypeFixedOMCost")
 
     def set_type_fixed_om_cost(self, df: pd.DataFrame):
+        df = self._order_type_and_period(df)
         self._write_to_sheet(df, self.file, "TypeFixedOMCost")
 
     def get_initial_capacity(self):
@@ -333,6 +335,13 @@ class TransmissionClient(BaseClient):
 
     def set_lifetime(self, df: pd.DataFrame):
         self._write_to_sheet(df, self.file, "Lifetime")
+
+    def _order_type_and_period(self, df):
+        """Some yaml files rearranges order of columns. Attempt to fix this."""
+        cols = ["Type", "Period"]
+        if set(cols).issubset(set(df.columns)) and df.columns[0] != "Type":
+            return df[cols + list(set(df.columns).difference(set(cols)))]
+        return df
 
 
 class StorageClient(BaseClient):
