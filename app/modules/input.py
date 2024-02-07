@@ -7,6 +7,8 @@ from empire.core.config import EmpireConfiguration, read_config_file
 from empire.input_client.client import EmpireInputClient
 from empire.results.maps import plot_max_transmission_capacity, plot_nodes_and_lines, plot_transmission
 
+# active_results = [i for i in (Path.cwd() / "Results/1_node").glob("*")][-1]
+
 
 def input(active_results: Path):
     st.title("Input")

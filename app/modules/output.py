@@ -27,6 +27,10 @@ def profile_function(func):
     return wrapper
 
 
+# active_results = Path("/Users/martihj/gitsource/OpenEMPIRE/Results/1_node_baseload/ncc_5000_co2_150_scale_1.0_shift-10")
+# active_results = Path("/Users/martihj/gitsource/OpenEMPIRE/Results/norway_analysis/ncc4000.0_na0.95_w200000.0_wog200000.0_pTrue")
+
+
 # @profile_function
 def output(active_results: Path) -> None:
     st.title("Results")
@@ -300,6 +304,11 @@ def output(active_results: Path) -> None:
     st.markdown("Import(+)/Export(-) [TWh/h]")
     flow_df = key_metrics_results.total_flow(df_operational_node_all) / 1e6
     st.dataframe(flow_df[selected_nodes].style.format("{:.2f}").background_gradient(cmap="Blues"))
+    
+    st.markdown("Marginal prices for generators")
+    df_mc = key_metrics_results.compute_discounted_marginal_cost()
+    st.dataframe(df_mc.style.format("{:.2f}").background_gradient(cmap="Blues"))
+
 
     st.markdown("Marginal prices for generators")
     df_mc = key_metrics_results.compute_discounted_marginal_cost()
