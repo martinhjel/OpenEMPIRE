@@ -1,9 +1,11 @@
+import json
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 
 import pandas as pd
 
+from empire.core.config import EmpireRunConfiguration
 from empire.input_client.client import EmpireInputClient
 from empire.utils import scale_and_shift_series
 
@@ -289,7 +291,7 @@ class ElectricLoadManager(IDataManager):
     def __init__(
         self,
         client: EmpireInputClient,
-        scenario_data_path: Path,
+        run_config: EmpireRunConfiguration,
         node: str,
         scale: float,
         shift: float,
@@ -301,13 +303,13 @@ class ElectricLoadManager(IDataManager):
         Parameters:
         -----------
         :param client: The client interface for retrieving and setting generator data.
-        :param scenario_data_path: Path to where scenario data is stored.
+        :param run_config: Empire run config.
         :param node: Node.
         :param scale: Value to scale the existing load with.
         :param shift: Value to shift the load with in MW.
         """
         self.client = client
-        self.scenario_data_path = scenario_data_path
+        self.run_config = run_config
         self.node = node
         self.scale = scale
         self.shift = shift
@@ -317,9 +319,14 @@ class ElectricLoadManager(IDataManager):
         """
         Shift the load profile, then adjust the annual demand. Note that load in the first period is used for scaling.
         """
-        df_electricload = pd.read_csv(self.scenario_data_path / "electricload.csv")
 
-        if self.node not in df_electricload.columns[1:]:
+        with open(self.run_config.empire_path / "config/countries.json", "r", encoding="utf-8") as file:
+            dict_countries = json.load(file)
+
+        df_electricload = pd.read_csv(self.run_config.scenario_data_path / "electricload.csv")
+        df_electricload = df_electricload.replace({"Node": dict_countries})
+
+        if self.node not in df_electricload.columns[:-4]:
             raise ValueError(f"Node {self.node} not found in 'electricload.csv'.")
 
         df_electric_annual_demand = self.client.nodes.get_electric_annual_demand()
@@ -339,7 +346,7 @@ class ElectricLoadManager(IDataManager):
 
         logger.info(f"Scaling load in node {self.node} by {self.scale} and shifting by {self.shift}")
         df_electricload.to_csv(
-            self.scenario_data_path / "electricload.csv", index=False, date_format=self.datetime_format
+            self.run_config.scenario_data_path / "electricload.csv", index=False, date_format=self.datetime_format
         )
 
 
