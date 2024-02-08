@@ -2,13 +2,14 @@ from pathlib import Path
 
 import streamlit as st
 
+from app.modules.compare import compare
 from app.modules.input import input
 from app.modules.output import output
 from app.modules.utils import get_active_results
 
 
 def app():
-    
+
     st.title("OpenEMPIRE")
 
     st.markdown(
@@ -22,33 +23,36 @@ def app():
     )
 
     result_folder = Path.cwd() / "Results"
-    
+
     other_results = st.sidebar.text_input("Absolute path to other folder with results:")
+    other_results = Path(other_results)
+    if not other_results.exists():
+        raise ValueError("Cannot find the results folder specified")
 
-    if other_results:
-        other_results = Path(other_results)
-        if not other_results.exists():
-            raise ValueError("Cannot find the results folder specified")
+    folders = [result_folder, other_results]
 
-        active_results = get_active_results([result_folder, other_results])
-
-    else:
-        active_results = get_active_results([result_folder])
-
-    st.sidebar.markdown(f"Current results:  {active_results}")
-
+    # Landing page
     if "current_page" not in st.session_state:
-        st.session_state["current_page"] = "Output"
+        st.session_state["current_page"] = "Input"
 
     with st.sidebar:
-        st.session_state["current_page"] = st.radio("Navigate to", ["Output", "Input"])
+        st.session_state["current_page"] = st.radio("Navigate to", ["Input", "Output", "Compare"])
 
     if st.session_state["current_page"] == "Input":
+        active_results = get_active_results(folders)
+        st.sidebar.markdown(f"Current results:  {active_results}")
+
         input(active_results)
-        # st.markdown("Currently disabled")
 
     elif st.session_state["current_page"] == "Output":
+        active_results = get_active_results(folders)
+
+        st.sidebar.markdown(f"Current results:  {active_results}")
+
         output(active_results)
+
+    elif st.session_state["current_page"] == "Compare":
+        compare(folders)
 
 
 if __name__ == "__main__":
@@ -70,7 +74,7 @@ if __name__ == "__main__":
     )
 
     name, authenticatied, username = authenticator.login("Login", "main")
-    
+
     if authenticatied:
         # st.write(f"Welcome *{name}*")
         app()
