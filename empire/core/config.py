@@ -26,6 +26,7 @@ class EmpireConfiguration:
         use_scenario_generation: bool,
         use_fixed_sample: bool,
         load_change_module: bool,
+        additional_load_is_baseload: bool,
         filter_make: bool,
         filter_use: bool,
         n_cluster: int,
@@ -58,6 +59,7 @@ class EmpireConfiguration:
         :param use_scenario_generation: If true, new operational scenarios will be generated. NB! If false, .tab-files or sampling key must be manually added to the ‘ScenarioData’-folder in the version.
         :param use_fixed_sample: If true, operational scenarios will be generated according to a fixed sampling key located in the ‘Scenario Data’ folder to ensure the same operational scenarios are generated.
         :param load_change_module:
+        :param additional_load_is_baseload: Additional load from the first period is added as baseload
         :param filter_make:
         :param filter_use:
         :param n_cluster:
@@ -86,6 +88,7 @@ class EmpireConfiguration:
         self.use_scenario_generation = use_scenario_generation
         self.use_fixed_sample = use_fixed_sample
         self.load_change_module = load_change_module
+        self.additional_load_is_baseload = additional_load_is_baseload
         self.filter_make = filter_make
         self.filter_use = filter_use
         self.n_cluster = n_cluster

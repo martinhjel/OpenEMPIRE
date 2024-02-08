@@ -422,7 +422,10 @@ def generate_random_scenario(
     hydroror_data = make_datetime(hydroror_data, time_format)
     hydroseasonal_data = make_datetime(hydroseasonal_data, time_format)
     electricload_data = make_datetime(electricload_data, time_format)
-
+    
+    if empire_config.additional_load_is_baseload:
+        electricload_data_original = electricload_data.copy(deep=True)
+                
     if LOADCHANGEMODULE:
         elecLoadMod_data = make_datetime(elecLoadMod_data, "%Y-%m-%d %H:%M")
 
@@ -470,6 +473,33 @@ def generate_random_scenario(
 
     for tree in range(n_tree_compare):
         for i in range(1, n_periods + 1):
+            
+            
+            if empire_config.additional_load_is_baseload:
+                # Shift the electricload such that additional load from period 1 is added as baseload (constant)
+                dataset_path = tab_file_path / "../Xlsx"
+                from empire.input_client.client import EmpireInputClient
+                input_client = EmpireInputClient(dataset_path=dataset_path)
+                
+                df_electric_annual_demand = input_client.nodes.get_electric_annual_demand()
+                
+                # Change names of nodes to follow load profile names
+                df_electric_annual_demand.replace({"Nodes": {v:k for k,v in dict_countries.items()}}, inplace=True)
+                                
+                df_pivot = df_electric_annual_demand.pivot(
+                    index="Period",
+                    values="ElectricAdjustment in MWh per hour",
+                    columns="Nodes"
+                )
+                
+                df_additional_electric_annual_demand = (df_pivot / df_pivot.iloc[0, :] - 1) * df_pivot
+
+                df_additional_per_hour = (df_additional_electric_annual_demand.loc[i]) / 8760
+
+                electricload_data_adjusted = electricload_data_original.iloc[:, :-5] + df_additional_per_hour
+                
+                electricload_data.iloc[:,:-5] = electricload_data_adjusted
+
             for scenario in range(1, n_scenarios + 1):
                 for s in seasons:
                     ###################
@@ -503,7 +533,8 @@ def generate_random_scenario(
                     hydroror_season = year_season_filter(hydroror_data, sample_year, s)
                     hydroseasonal_season = year_season_filter(hydroseasonal_data, sample_year, s)
                     electricload_season = year_season_filter(electricload_data, sample_year, s)
-
+                    
+                    
                     if LOADCHANGEMODULE:
                         elecLoadMod_period = elecLoadMod_data.loc[elecLoadMod_data.Period.isin([i])]
                         elecLoadMod_period = elecLoadMod_period.drop(columns=["Period"])
