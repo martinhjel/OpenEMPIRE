@@ -3,6 +3,7 @@ ncc=$1
 na=$2
 w=$3
 p=$4
+b=$5
 
 # Load modules and activate conda environment
 module load gurobi/10.0
@@ -25,21 +26,33 @@ fi
 echo "Active conda env: "
 echo $CONDA_DEFAULT_ENV
 
+# Initialize the base command
+cmd="python scripts/run_analysis.py"
+
+# Add arguments that are always present
+cmd+=" --nuclear-capital-cost $ncc"
+cmd+=" --nuclear-availability $na"
+cmd+=" --max-onshore-wind-norway $w"
+cmd+=" --max-offshore-wind-grounded-norway $w"
+
+# Conditionally add the -p flag
 if [ "$p" == "true" ]; then
     echo "Protective case"
-    python scripts/run_analysis.py \
-        --nuclear-capital-cost $ncc \
-        --nuclear-availability $na \
-        --max-onshore-wind-norway $w \
-        --max-offshore-wind-grounded-norway $w \
-        -p
+    cmd+=" -p"
 else
     echo "Not protective case"
-    python scripts/run_analysis.py \
-        --nuclear-capital-cost $ncc \
-        --nuclear-availability $na \
-        --max-onshore-wind-norway $w \
-        --max-offshore-wind-grounded-norway $w
 fi
+
+
+# Conditionally add the -b flag
+if [ "$b" == "true" ]; then
+    echo "Baseload case"
+    cmd+=" -b"
+else
+    echo "Not baseload case"
+fi
+
+# Execute the command
+eval $cmd
 
 echo "Done with starting bash script!"

@@ -10,8 +10,9 @@ discount_rate: 0.05
 wacc: 0.05
 optimization_solver: "Gurobi"
 use_scenario_generation: True
-use_fixed_sample: False
+use_fixed_sample: True
 load_change_module: False
+additional_load_is_baseload: True
 filter_make : False
 filter_use : False
 n_cluster : 10

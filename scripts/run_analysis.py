@@ -39,6 +39,13 @@ parser.add_argument(
     action="store_true",
 )
 
+parser.add_argument(
+    "-b",
+    "--baseload",
+    help="Additional load will be added as baseload, not scaled by the load profile.",
+    action="store_true",
+)
+
 parser.add_argument("-t", "--test-run", help="Test run without optimization", action="store_true")
 
 args = parser.parse_args()
@@ -47,18 +54,22 @@ capital_cost = args.nuclear_capital_cost
 nuclear_availability = args.nuclear_availability
 max_onshore_wind_norway = args.max_onshore_wind_norway
 max_offshore_wind_grounded_norway = args.max_offshore_wind_grounded_norway
+additional_load_is_baseload = args.baseload
 version = "europe_v51"
 
 ## Read config and setup folders ##
 config = read_config_file(Path("config/run.yaml"))
 empire_config = EmpireConfiguration.from_dict(config=config)
 
-run_path = Path.cwd() / "Results/run_analysis/ncc{ncc}_na{na}_w{w}_wog{wog}_p{p}".format(
+empire_config.additional_load_is_baseload = additional_load_is_baseload
+
+run_path = Path.cwd() / "Results/run_analysis/ncc{ncc}_na{na}_w{w}_wog{wog}_p{p}_b{b}".format(
     ncc=capital_cost,
     na=nuclear_availability,
     w=max_onshore_wind_norway,
     wog=max_offshore_wind_grounded_norway,
     p=args.protective,
+    b=additional_load_is_baseload
 )
 
 if (run_path / "Output/results_objective.csv").exists():

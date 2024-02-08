@@ -12,6 +12,7 @@ optimization_solver: "Gurobi"       # Mathematical solver used for optimization 
 use_scenario_generation: False      # Indicates if scenarios should be generated dynamically
 use_fixed_sample: True              # Specifies if fixed scenario samples should be used
 load_change_module: False           #
+additional_load_is_baseload: True   #
 filter_make : False                 #
 filter_use : False                  #
 n_cluster : 10                      #
