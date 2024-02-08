@@ -32,6 +32,7 @@ cd $LOCAL_DIR
 tar --exclude='./.*' \
     --exclude='./Results/*/' \
     --exclude='./docs/*/' \
+    --exclude='./tests/*/' \
     --exclude='./notebooks/*/' \
     --exclude='*__pycache__*' \
     -cvzf myfiles.tar.gz *
