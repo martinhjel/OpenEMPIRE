@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from datetime import datetime
 from pathlib import Path
 
 from empire.core.config import EmpireConfiguration, read_config_file
@@ -18,6 +19,13 @@ parser.add_argument(
 parser.add_argument("-f", "--force", help="Force new run if old exist.", action="store_true")
 parser.add_argument("-c", "--config-file", help="Path to config file.", default="config/run.yaml")
 
+parser.add_argument(
+    "-b",
+    "--baseload",
+    help="Additional load will be added as baseload, not scaled by the load profile.",
+    action="store_true",
+)
+
 args = parser.parse_args()
 
 ## Read config and setup folders ##
@@ -28,7 +36,14 @@ else:
 
 empire_config = EmpireConfiguration.from_dict(config=config)
 
-run_path = Path.cwd() / f"Results/basic_run/dataset_{args.dataset}"
+empire_config.additional_load_is_baseload = False
+if args.baseload:
+    empire_config.additional_load_is_baseload = True
+
+run_path = (
+    Path.cwd()
+    / f"Results/0_basic_run/dataset_{args.dataset}_{datetime.now()}_b{empire_config.additional_load_is_baseload}"
+)
 
 if (run_path / "Output/results_objective.csv").exists() and not args.force:
     raise ValueError("There already exists results for this analysis run.")

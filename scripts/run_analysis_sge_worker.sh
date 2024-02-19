@@ -52,6 +52,8 @@ else
     echo "Not baseload case"
 fi
 
+echo Executing: + $cmd
+
 # Execute the command
 eval $cmd
 

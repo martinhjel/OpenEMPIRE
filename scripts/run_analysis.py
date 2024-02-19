@@ -2,15 +2,18 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 from empire.core.config import EmpireConfiguration, read_config_file
+from empire.core.model_runner import run_empire_model, setup_run_paths
 from empire.input_client.client import EmpireInputClient
 from empire.input_data_manager import (
     AvailabilityManager,
     CapitalCostManager,
     MaxInstalledCapacityManager,
     MaxTransmissionCapacityManager,
+    RampRateManager,
+    InitialTransmissionCapacityManager,
+    TransmissionLengthManager,
 )
 from empire.logger import get_empire_logger
-from empire.core.model_runner import run_empire_model, setup_run_paths
 from empire.utils import restricted_float
 
 parser = ArgumentParser(description="A CLI script to run the Empire model.")
@@ -69,7 +72,7 @@ run_path = Path.cwd() / "Results/run_analysis/ncc{ncc}_na{na}_w{w}_wog{wog}_p{p}
     w=max_onshore_wind_norway,
     wog=max_offshore_wind_grounded_norway,
     p=args.protective,
-    b=additional_load_is_baseload
+    b=additional_load_is_baseload,
 )
 
 if (run_path / "Output/results_objective.csv").exists():
@@ -77,6 +80,16 @@ if (run_path / "Output/results_objective.csv").exists():
 
 run_config = setup_run_paths(version=version, empire_config=empire_config, run_path=run_path)
 logger = get_empire_logger(run_config=run_config)
+
+if additional_load_is_baseload:
+    if not empire_config.use_scenario_generation:
+        logger.warning(
+            """Setting 'use_scenario_generation' to True as load must be dynamically changed when 
+            'additional_load_is_baseload' is set to True."""
+        )
+
+    empire_config.use_scenario_generation = True
+
 
 logger.info("Running analysis with:")
 logger.info(f"Nuclear capital cost: {capital_cost}")
@@ -143,8 +156,35 @@ if max_offshore_wind_grounded_norway is not None:
         )
     )
 
+# More reasonable ramp rate for nuclear
+data_managers.append(RampRateManager(client=client, thermal_generator="Nuclear", ramp_rate=0.85))
+
+# Limit new direct cable to germany from NO2
+data_managers.append(
+    MaxTransmissionCapacityManager(client=client, from_node="NO2", to_node="Germany", max_installed_capacity=1400)
+)
+
+# Include North Sea Link
+data_managers.append(
+    InitialTransmissionCapacityManager(client=client,from_node="NO2", to_node="Great Brit.", initial_installed_capacity=1400)
+)
+
+# Northconnect 
+data_managers.append(
+    MaxTransmissionCapacityManager(client=client,from_node="NO5", to_node="Great Brit.", initial_installed_capacity=0)
+)
+
+# Update length of Norned
+data_managers.append(
+    TransmissionLengthManager(client=client, from_node="NO2", to_node="Netherlands", length=580)
+)
+
+
 
 ## Run empire model
 run_empire_model(
     empire_config=empire_config, run_config=run_config, data_managers=data_managers, test_run=args.test_run
 )
+
+# TODO: limitations on bio?, cost transmission
+
