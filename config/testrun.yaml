@@ -20,7 +20,7 @@ moment_matching : False
 n_tree_compare : 20
 use_emission_cap: False
 compute_operational_duals: True
-print_in_iamc_format: True
+print_in_iamc_format: False
 write_in_lp_format: False
 serialize_instance: False
 north_sea: False
