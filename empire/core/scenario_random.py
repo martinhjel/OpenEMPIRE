@@ -483,6 +483,9 @@ def generate_random_scenario(
                 
                 df_electric_annual_demand = input_client.nodes.get_electric_annual_demand()
                 
+                # Adjust for space in node name
+                df_electric_annual_demand.loc[:,"Nodes"] = df_electric_annual_demand["Nodes"].str.replace(" ", "")
+                
                 # Change names of nodes to follow load profile names
                 df_electric_annual_demand.replace({"Nodes": {v:k for k,v in dict_countries.items()}}, inplace=True)
                                 
@@ -498,7 +501,8 @@ def generate_random_scenario(
 
                 electricload_data_adjusted = electricload_data_original.iloc[:, :-5] + df_additional_per_hour
                 
-                electricload_data.iloc[:,:-5] = electricload_data_adjusted
+                for col in electricload_data_adjusted.columns:
+                    electricload_data.loc[:,col] = electricload_data_adjusted[col]
 
             for scenario in range(1, n_scenarios + 1):
                 for s in seasons:
