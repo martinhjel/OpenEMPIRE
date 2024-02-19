@@ -175,7 +175,7 @@ data_managers.append(
 
 # Northconnect
 data_managers.append(
-    MaxTransmissionCapacityManager(client=client, from_node="NO5", to_node="Great Brit.", initial_installed_capacity=0)
+    MaxTransmissionCapacityManager(client=client, from_node="NO5", to_node="Great Brit.", max_installed_capacity=0)
 )
 
 # Update length of Norned
@@ -184,11 +184,11 @@ data_managers.append(TransmissionLengthManager(client=client, from_node="NO2", t
 # No learning for transmission cost
 data_managers.append(TransmissionCapexManager(client=client, transmission_type="HVAC_OverheadLine", capex=661.609375))
 data_managers.append(
-    TransmissionFixedOMManager(client=client, transmission_type="HVAC_OverheadLine", capex=661.609375 * 0.05)
+    TransmissionFixedOMManager(client=client, transmission_type="HVAC_OverheadLine", fixed_om=661.609375 * 0.05)
 )
 data_managers.append(TransmissionCapexManager(client=client, transmission_type="HVDC_Cable", capex=2769.230769))
 data_managers.append(
-    TransmissionFixedOMManager(client=client, transmission_type="HVDC_Cable", capex=2769.230769 * 0.05)
+    TransmissionFixedOMManager(client=client, transmission_type="HVDC_Cable", fixed_om=2769.230769 * 0.05)
 )
 
 ## Run empire model
