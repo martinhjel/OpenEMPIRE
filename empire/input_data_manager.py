@@ -266,7 +266,7 @@ class MaxTransmissionCapacityManager(IDataManager):
 
     def apply(self) -> None:
         df_max_installed = self.client.transmission.get_max_install_capacity_raw()
-
+        
         condition = df_max_installed["InterconnectorLinks"].isin([self.from_node]) & df_max_installed["ToNode"].isin(
             [self.to_node]
         )
@@ -394,7 +394,7 @@ class RampRateManager(IDataManager):
         df_ramp_rate.loc[df_ramp_rate["ThermalGenerators"] == self.thermal_generator, "RampRate"] = self.ramp_rate
 
         logger.info(f"Setting ramp rate for {self.thermal_generator} to {self.ramp_rate}")
-        self.client.transmission.set_max_install_capacity_raw(df_ramp_rate)
+        self.client.generator.set_ramp_rate(df_ramp_rate)
 
 
 class InitialTransmissionCapacityManager(IDataManager):
