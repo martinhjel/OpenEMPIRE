@@ -17,7 +17,7 @@ def compare(folders):
     col1, col2 = st.columns(2)
     results_folder_relative1 = col1.selectbox("Choose results 1: ", sorted(list(valid_result_folders_dict.keys())))
     active_results_1 = valid_result_folders_dict[results_folder_relative1]
-
+    col1.markdown("")
     results_folder_relative2 = col2.selectbox("Choose results 2: ", sorted(list(valid_result_folders_dict.keys())))
     active_results_2 = valid_result_folders_dict[results_folder_relative2]
 
@@ -34,7 +34,12 @@ def compare(folders):
 
     df_1 = df_op.query(f"Node=='{node_1}' and Period=='{period_1}' and Scenario=='{scenario_1}'")
 
-    df_op = ouput_client_2.get_node_operational_values()
+    use_resolved = col2.toggle("Use SRMC values", value=True)
+    if use_resolved:
+        df_op = pd.read_csv(active_results_2/"Output/results_output_Operational_resolved.csv")
+    else:
+        df_op = ouput_client_2.get_node_operational_values()
+    
     df_op["Case"] = "Case2"
 
     col2.markdown("Case2")
@@ -42,8 +47,10 @@ def compare(folders):
     period_2 = col2.selectbox("Period2: ", df_op["Period"].unique())
     scenario_2 = col2.selectbox("Scenario2: ", df_op["Scenario"].unique())
 
-    df_2 = df_op.query(f"Node=='{node_2}' and Period=='{period_2}' and Scenario=='{scenario_2}'")
+    
 
+    df_2 = df_op.query(f"Node=='{node_2}' and Period=='{period_2}' and Scenario=='{scenario_2}'")
+    
     value = st.selectbox(
         "Value: ",
         set(df_1.columns)

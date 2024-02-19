@@ -9,7 +9,8 @@ class KeyMetricsResults:
         self.empire_config = empire_config
 
     def generators(self, period):
-        df = self.output_client.get_generators_values()
+        df = self.output_client.get_generators_values().copy(deep=True)
+
         df.loc[:, "genInvCap_MW"] /= 1e3
         df.loc[:, "genInstalledCap_MW"] /= 1e3
 
