@@ -7,10 +7,12 @@ from empire.input_client.client import EmpireInputClient
 from empire.input_data_manager import (
     AvailabilityManager,
     CapitalCostManager,
+    InitialTransmissionCapacityManager,
     MaxInstalledCapacityManager,
     MaxTransmissionCapacityManager,
     RampRateManager,
-    InitialTransmissionCapacityManager,
+    TransmissionCapexManager,
+    TransmissionFixedOMManager,
     TransmissionLengthManager,
 )
 from empire.logger import get_empire_logger
@@ -166,25 +168,30 @@ data_managers.append(
 
 # Include North Sea Link
 data_managers.append(
-    InitialTransmissionCapacityManager(client=client,from_node="NO2", to_node="Great Brit.", initial_installed_capacity=1400)
+    InitialTransmissionCapacityManager(
+        client=client, from_node="NO2", to_node="Great Brit.", initial_installed_capacity=1400
+    )
 )
 
-# Northconnect 
+# Northconnect
 data_managers.append(
-    MaxTransmissionCapacityManager(client=client,from_node="NO5", to_node="Great Brit.", initial_installed_capacity=0)
+    MaxTransmissionCapacityManager(client=client, from_node="NO5", to_node="Great Brit.", initial_installed_capacity=0)
 )
 
 # Update length of Norned
+data_managers.append(TransmissionLengthManager(client=client, from_node="NO2", to_node="Netherlands", length=580))
+
+# No learning for transmission cost
+data_managers.append(TransmissionCapexManager(client=client, transmission_type="HVAC_OverheadLine", capex=661.609375))
 data_managers.append(
-    TransmissionLengthManager(client=client, from_node="NO2", to_node="Netherlands", length=580)
+    TransmissionFixedOMManager(client=client, transmission_type="HVAC_OverheadLine", capex=661.609375 * 0.05)
 )
-
-
+data_managers.append(TransmissionCapexManager(client=client, transmission_type="HVDC_Cable", capex=2769.230769))
+data_managers.append(
+    TransmissionFixedOMManager(client=client, transmission_type="HVDC_Cable", capex=2769.230769 * 0.05)
+)
 
 ## Run empire model
 run_empire_model(
     empire_config=empire_config, run_config=run_config, data_managers=data_managers, test_run=args.test_run
 )
-
-# TODO: limitations on bio?, cost transmission
-

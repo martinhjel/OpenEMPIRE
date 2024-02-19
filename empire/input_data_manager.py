@@ -396,6 +396,7 @@ class RampRateManager(IDataManager):
         logger.info(f"Setting ramp rate for {self.thermal_generator} to {self.ramp_rate}")
         self.client.transmission.set_max_install_capacity_raw(df_ramp_rate)
 
+
 class InitialTransmissionCapacityManager(IDataManager):
     """
     Manager responsible for updating the initial installed transmission capacity.
@@ -426,9 +427,7 @@ class InitialTransmissionCapacityManager(IDataManager):
     def apply(self) -> None:
         df_initial = self.client.transmission.get_initial_capacity()
 
-        condition = df_initial["InterconnectorLinks"].isin([self.from_node]) & df_initial["ToNode"].isin(
-            [self.to_node]
-        )
+        condition = df_initial["InterconnectorLinks"].isin([self.from_node]) & df_initial["ToNode"].isin([self.to_node])
 
         if not condition.any():
             raise ValueError(f"No transmissoion connection found between {self.from_node} and {self.to_node}.")
@@ -471,20 +470,91 @@ class TransmissionLengthManager(IDataManager):
     def apply(self) -> None:
         df_length = self.client.transmission.get_length()
 
-        condition = df_length["FromNode"].isin([self.from_node]) & df_length["ToNode"].isin(
-            [self.to_node]
-        )
+        condition = df_length["FromNode"].isin([self.from_node]) & df_length["ToNode"].isin([self.to_node])
 
         if not condition.any():
             raise ValueError(f"No transmission connection found between {self.from_node} and {self.to_node}.")
 
         df_length.loc[condition, "Length in km"] = self.length
 
-        logger.info(
-            f"Setting transmission length between {self.from_node} and {self.to_node} to {self.length}"
-        )
+        logger.info(f"Setting transmission length between {self.from_node} and {self.to_node} to {self.length}")
         self.client.transmission.set_length(df_length)
 
+
+class TransmissionCapexManager(IDataManager):
+    """
+    Manager responsible for updating the capital cost of transmission types.
+    """
+
+    def __init__(
+        self,
+        client: EmpireInputClient,
+        transmission_type: str,
+        capex: float,
+    ) -> None:
+        """
+        Initializes the TransmissionCapexManager with the provided parameters.
+
+        Parameters:
+        -----------
+        :param client: The client interface for retrieving and setting generator data.
+        :param transmission_type: Transmission type (HVDC_Cable/HVAC_OverheadLine).
+        :param capex: The capex in EUR/MW/km.
+        """
+        self.client = client
+        self.transmission_type = transmission_type
+        self.capex = capex
+
+    def apply(self) -> None:
+        df_capex = self.client.transmission.get_type_capital_cost()
+
+        condition = df_capex["Type"].isin([self.transmission_type])
+
+        if not condition.any():
+            raise ValueError(f"No transmission type found for {self.transmission_type}.")
+
+        df_capex.loc[condition, "TypeCapitalCost in euro per MWkm"] = self.capex
+
+        logger.info(f"Setting transmission type capex for {self.transmission_type} to {self.capex}")
+        self.client.transmission.set_type_capital_cost(df_capex)
+
+
+class TransmissionFixedOMManager(IDataManager):
+    """
+    Manager responsible for updating the Fixed O&M cost of transmission types.
+    """
+
+    def __init__(
+        self,
+        client: EmpireInputClient,
+        transmission_type: str,
+        fixed_om: float,
+    ) -> None:
+        """
+        Initializes the TransmissionCapexManager with the provided parameters.
+
+        Parameters:
+        -----------
+        :param client: The client interface for retrieving and setting generator data.
+        :param transmission_type: Transmission type (HVDC_Cable/HVAC_OverheadLine).
+        :param fixed_om: The fixed O&M in EUR/MW.
+        """
+        self.client = client
+        self.transmission_type = transmission_type
+        self.fixed_om = fixed_om
+
+    def apply(self) -> None:
+        df_fixed_om = self.client.transmission.get_type_capital_cost()
+
+        condition = df_fixed_om["Type"].isin([self.transmission_type])
+
+        if not condition.any():
+            raise ValueError(f"No transmission type found for {self.transmission_type}.")
+
+        df_fixed_om.loc[condition, "TypeFixedOMCost in euro per MW"] = self.fixed_om
+
+        logger.info(f"Setting transmission type fixed o&m for {self.transmission_type} to {self.fixed_om}")
+        self.client.transmission.set_type_fixed_om_cost(df_fixed_om)
 
 
 if __name__ == "__main__":
