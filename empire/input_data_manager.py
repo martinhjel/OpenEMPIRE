@@ -7,7 +7,6 @@ import pandas as pd
 
 from empire.core.config import EmpireRunConfiguration
 from empire.input_client.client import EmpireInputClient
-from empire.utils import scale_and_shift_series
 
 logger = logging.getLogger(__name__)
 
@@ -298,11 +297,12 @@ class ElectricLoadManager(IDataManager):
         datetime_format: str = "%d/%m/%Y %H:%M",
     ) -> None:
         """
-        Initializes the ElectricLoadManager with the provided parameters.
+        Initializes the ElectricLoadManager with the provided parameters. Scales and shifts the load for a node for
+        all periods. Note that the load profile is scaled and shifted by the first period.
 
         Parameters:
         -----------
-        :param client: The client interface for retrieving and setting generator data.
+        :param client: The empire input client.
         :param run_config: Empire run config.
         :param node: Node.
         :param scale: Value to scale the existing load with.
@@ -324,7 +324,7 @@ class ElectricLoadManager(IDataManager):
             dict_countries = json.load(file)
 
         df_electricload = pd.read_csv(self.run_config.scenario_data_path / "electricload.csv")
-        df_electricload = df_electricload.replace({"Node": dict_countries})
+        df_electricload = df_electricload.rename(columns=dict_countries)
 
         if self.node not in df_electricload.columns[:-4]:
             raise ValueError(f"Node {self.node} not found in 'electricload.csv'.")
@@ -338,9 +338,9 @@ class ElectricLoadManager(IDataManager):
 
         df_electric_annual_demand.loc[cond, "ElectricAdjustment in MWh per hour"] = (scale + self.shift) * 8760
 
-        df_electricload.loc[:, self.node] = scale_and_shift_series(
-            df_electricload[self.node], scale=scale, shift=self.shift
-        )
+        df_electricload.loc[:, self.node] = (scale + self.shift / df_electricload[self.node]) * df_electricload[
+            self.node
+        ]
 
         self.client.nodes.set_electric_annual_demand(df_electric_annual_demand)
 
@@ -348,6 +348,143 @@ class ElectricLoadManager(IDataManager):
         df_electricload.to_csv(
             self.run_config.scenario_data_path / "electricload.csv", index=False, date_format=self.datetime_format
         )
+
+
+class RampRateManager(IDataManager):
+    """
+    Manager responsible for updating the ramp rate of thermal generators.
+    """
+
+    def __init__(
+        self,
+        client: EmpireInputClient,
+        thermal_generator: str,
+        ramp_rate: float,
+    ) -> None:
+        """
+        Initializes the RampRateManager with the provided parameters.
+
+        Parameters:
+        -----------
+        :param client: The client interface for retrieving and setting generator data.
+        :param thermal_generator: Thermal generator type.
+        :param ramp_rate: Ramp rate value, (0.0, 1.0].
+        """
+        self.client = client
+        self.thermal_generator = thermal_generator
+        self.ramp_rate = ramp_rate
+
+        self.validate()
+
+    def validate(self):
+        if self.ramp_rate > 1.0:
+            raise ValueError("Ramp rate cannot be larger than 1.0")
+
+        if self.ramp_rate <= 0.0:
+            raise ValueError("Ramp rate cannot be less than or equal to 0.0")
+
+    def apply(self) -> None:
+        df_ramp_rate = self.client.generator.get_ramp_rate()
+
+        condition = df_ramp_rate["ThermalGenerators"].isin([self.thermal_generator])
+
+        if not condition.any():
+            raise ValueError(f"No ther thermal generator called {self.thermal_generator} found in dataset.")
+
+        df_ramp_rate.loc[df_ramp_rate["ThermalGenerators"] == self.thermal_generator, "RampRate"] = self.ramp_rate
+
+        logger.info(f"Setting ramp rate for {self.thermal_generator} to {self.ramp_rate}")
+        self.client.transmission.set_max_install_capacity_raw(df_ramp_rate)
+
+class InitialTransmissionCapacityManager(IDataManager):
+    """
+    Manager responsible for updating the initial installed transmission capacity.
+    """
+
+    def __init__(
+        self,
+        client: EmpireInputClient,
+        from_node: str,
+        to_node: str,
+        initial_installed_capacity: float,
+    ) -> None:
+        """
+        Initializes the InitialTransmissionCapacityManager with the provided parameters.
+
+        Parameters:
+        -----------
+        :param client: The client interface for retrieving and setting generator data.
+        :param from_node: From node.
+        :param to_node: To node.
+        :param max_installed_capacity: The new maximum installed capacity value.
+        """
+        self.client = client
+        self.from_node = from_node
+        self.to_node = to_node
+        self.initial_installed_capacity = initial_installed_capacity
+
+    def apply(self) -> None:
+        df_initial = self.client.transmission.get_initial_capacity()
+
+        condition = df_initial["InterconnectorLinks"].isin([self.from_node]) & df_initial["ToNode"].isin(
+            [self.to_node]
+        )
+
+        if not condition.any():
+            raise ValueError(f"No transmissoion connection found between {self.from_node} and {self.to_node}.")
+
+        df_initial.loc[condition, "TransmissionInitialCapacity"] = self.initial_installed_capacity
+
+        logger.info(
+            f"Setting initial transmission capacity between {self.from_node} and {self.to_node} to {self.initial_installed_capacity}"
+        )
+        self.client.transmission.set_initial_capacity(df_initial)
+
+
+class TransmissionLengthManager(IDataManager):
+    """
+    Manager responsible for updating the length of transmission between nodes.
+    """
+
+    def __init__(
+        self,
+        client: EmpireInputClient,
+        from_node: str,
+        to_node: str,
+        length: float,
+    ) -> None:
+        """
+        Initializes the TransmissionLengthCapacityManager with the provided parameters.
+
+        Parameters:
+        -----------
+        :param client: The client interface for retrieving and setting generator data.
+        :param from_node: From node.
+        :param to_node: To node.
+        :param length: The new length in km.
+        """
+        self.client = client
+        self.from_node = from_node.replace(" ", "")
+        self.to_node = to_node.replace(" ", "")
+        self.length = length
+
+    def apply(self) -> None:
+        df_length = self.client.transmission.get_length()
+
+        condition = df_length["FromNode"].isin([self.from_node]) & df_length["ToNode"].isin(
+            [self.to_node]
+        )
+
+        if not condition.any():
+            raise ValueError(f"No transmission connection found between {self.from_node} and {self.to_node}.")
+
+        df_length.loc[condition, "Length in km"] = self.length
+
+        logger.info(
+            f"Setting transmission length between {self.from_node} and {self.to_node} to {self.length}"
+        )
+        self.client.transmission.set_length(df_length)
+
 
 
 if __name__ == "__main__":
