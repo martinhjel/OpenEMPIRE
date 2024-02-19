@@ -86,17 +86,12 @@ def scale_and_shift_series(profile: pd.Series, scale: float, shift: float):
     The function returns a new profile that can be scaled by 'scale' + 'shift' while preserving the same 
     mean and standard deviation as a scaling and shifting of the original profile.
     
-    :param profile: Profile to scale and shift, values within [0,1].
+    :param profile: Profile to scale and shift.
     :param scale: Scale value
     :param shift: Shift value
     :returns: profile that only needs to be scaled
     """
-    if profile.max() > 1.0:
-        raise ValueError("'profile' cannot be larger than 1.0.")
-    
-    if profile.min() < 0.0:
-        raise ValueError("'profile' cannot be smaller than 0.0.")
     
     profile_adjusted = (scale + shift / profile) * profile
-    profile_adjusted = profile_adjusted / profile_adjusted.max()
+    
     return profile_adjusted
