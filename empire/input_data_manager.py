@@ -237,6 +237,57 @@ class MaxInstalledCapacityManager(IDataManager):
         self.client.generator.set_max_installed_capacity(df_max_installed)
 
 
+class MaxBuiltCapacityManager(IDataManager):
+    """
+    Manager responsible for updating the maximum built capacities for specific generator technologies within a
+    given dataset.
+    """
+
+    def __init__(
+        self,
+        client: EmpireInputClient,
+        generator_technology: str,
+        max_built_capacity: float,
+        nodes: list[str] | None = None,
+    ) -> None:
+        """
+        Initializes the MaxBuiltCapacityManager with the provided parameters.
+
+        Parameters:
+        -----------
+        :param client: The client interface for retrieving and setting generator data.
+        :param generator_technology: The specific generator technology to be updated.
+        :param max_built_capacity: The new maximum built capacity value to be set for the specified generator technology.
+        :param nodes: List of node names where the generator technology is applied or None to apply for all nodes.
+        """
+        self.client = client
+        self.generator_technology = generator_technology
+        self.nodes = nodes
+        self.max_built_capacity = max_built_capacity
+
+    def apply(self) -> None:
+        df_max_built = self.client.generator.get_max_built_capacity()
+
+        if self.nodes:
+            condition = df_max_built["Node"].isin(self.nodes) & df_max_built["GeneratorTechnology"].isin(
+                [self.generator_technology]
+            )
+        else:
+            condition = df_max_built["GeneratorTechnology"].isin(
+                [self.generator_technology]
+            )
+
+        if not condition.any():
+            raise ValueError(f"No rows found for nodes {self.nodes} and technology {self.generator_technology}.")
+
+        df_max_built.loc[condition, "generatorMaxBuildCapacity in MW"] = self.max_built_capacity
+
+        logger.info(
+            f"Setting max built capacity to {self.max_built_capacity} for {self.generator_technology} in nodes {self.nodes}."
+        )
+        self.client.generator.set_max_built_capacity(df_max_built)
+
+
 class MaxTransmissionCapacityManager(IDataManager):
     """
     Manager responsible for updating the maximum installed transmission capacity.
