@@ -8,11 +8,10 @@ from empire.input_data_manager import (
     AvailabilityManager,
     CapitalCostManager,
     InitialTransmissionCapacityManager,
+    MaxBuiltCapacityManager,
     MaxInstalledCapacityManager,
     MaxTransmissionCapacityManager,
     RampRateManager,
-    TransmissionCapexManager,
-    TransmissionFixedOMManager,
     TransmissionLengthManager,
 )
 from empire.logger import get_empire_logger
@@ -51,6 +50,13 @@ parser.add_argument(
     action="store_true",
 )
 
+parser.add_argument(
+    "-c",
+    "--ccs",
+    help="Add option to build CCS plants or not.",
+    action="store_true",
+)
+
 parser.add_argument("-t", "--test-run", help="Test run without optimization", action="store_true")
 
 args = parser.parse_args()
@@ -68,13 +74,14 @@ empire_config = EmpireConfiguration.from_dict(config=config)
 
 empire_config.additional_load_is_baseload = additional_load_is_baseload
 
-run_path = Path.cwd() / "Results/run_analysis/ncc{ncc}_na{na}_w{w}_wog{wog}_p{p}_b{b}".format(
+run_path = Path.cwd() / "Results/run_analysis/ncc{ncc}_na{na}_w{w}_wog{wog}_p{p}_b{b}_ccs{c}".format(
     ncc=capital_cost,
     na=nuclear_availability,
     w=max_onshore_wind_norway,
     wog=max_offshore_wind_grounded_norway,
     p=args.protective,
     b=additional_load_is_baseload,
+    c=args.ccs,
 )
 
 if (run_path / "Output/results_objective.csv").exists():
@@ -158,6 +165,10 @@ if max_offshore_wind_grounded_norway is not None:
         )
     )
 
+if args.ccs:
+    logger.info("Adding CCS")
+    data_managers.append(MaxBuiltCapacityManager(client=client, generator_technology="CCS", max_built_capacity=200000))
+
 # More reasonable ramp rate for nuclear
 data_managers.append(RampRateManager(client=client, thermal_generator="Nuclear", ramp_rate=0.85))
 
@@ -180,16 +191,6 @@ data_managers.append(
 
 # Update length of Norned
 data_managers.append(TransmissionLengthManager(client=client, from_node="NO2", to_node="Netherlands", length=580))
-
-# No learning for transmission cost
-data_managers.append(TransmissionCapexManager(client=client, transmission_type="HVAC_OverheadLine", capex=661.609375))
-data_managers.append(
-    TransmissionFixedOMManager(client=client, transmission_type="HVAC_OverheadLine", fixed_om=661.609375 * 0.05)
-)
-data_managers.append(TransmissionCapexManager(client=client, transmission_type="HVDC_Cable", capex=2769.230769))
-data_managers.append(
-    TransmissionFixedOMManager(client=client, transmission_type="HVDC_Cable", fixed_om=2769.230769 * 0.05)
-)
 
 ## Run empire model
 run_empire_model(

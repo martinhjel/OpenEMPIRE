@@ -7,6 +7,7 @@ NUCLEAR_AVAILABILITIES=("0.95")
 MAX_WINDS=("0" "200000")
 PROTECTIVE=("false" "true")
 BASELOAD=("false" "true")
+CCS=("true")
 
 mkdir -p ./hpc_output/
 
@@ -16,17 +17,19 @@ for ncc in "${NUCLEAR_CAPITAL_COSTS[@]}"; do
         for w in "${MAX_WINDS[@]}"; do
             for p in "${PROTECTIVE[@]}"; do
                 for b in "${BASELOAD[@]}"; do
+                    for c in "${CCS[@]}"; do
                     qsub \
                         -V \
                         -cwd \
-                        -N empire_model_${ncc}_${na}_${w}_${p}_${b} \
+                            -N empire_model_${ncc}_${na}_${w}_${p}_${b}_${c} \
                         -o ./hpc_output/ \
                         -e ./hpc_output/\
                         -l h_rt=12:00:00 \
                         -l mem_free=150G \
-                        -l hostname="compute-4-51|compute-4-52|compute-4-53|compute-4-55|compute-4-56" \
+                            -l hostname="compute-4-51|compute-4-57|compute-4-53|compute-4-55|compute-4-56|compute-4-58" \
                         -pe smp 8 \
-                        ./scripts/run_analysis_sge_worker.sh $ncc $na $w $p $b
+                            ./scripts/run_analysis_sge_worker.sh $ncc $na $w $p $b $c
+                    done
                 done
             done
         done

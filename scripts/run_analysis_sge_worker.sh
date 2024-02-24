@@ -4,6 +4,7 @@ na=$2
 w=$3
 p=$4
 b=$5
+c=$6
 
 # Load modules and activate conda environment
 module load gurobi/10.0
@@ -50,6 +51,15 @@ if [ "$b" == "true" ]; then
     cmd+=" -b"
 else
     echo "Not baseload case"
+fi
+
+
+# Conditionally add the -c flag
+if [ "$c" == "true" ]; then
+    echo "Baseload case"
+    cmd+=" -c"
+else
+    echo "Not CCS case"
 fi
 
 echo Executing: + $cmd
