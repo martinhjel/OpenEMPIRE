@@ -378,7 +378,7 @@ def plot_max_transmission_capacity(
 
 
 def plot_built_transmission_capacity(
-    df_coords: pd.DataFrame, df_lines: pd.DataFrame, df_built: pd.DataFrame, metric="transmissionInstalledCap_MW"
+    df_coords: pd.DataFrame, df_lines: pd.DataFrame, df_built: pd.DataFrame, metric="transmissionInstalledCap_MW", marker_size=10,
 ) -> go.Figure:
     """
     Return a figure with a map of max capacity of the transmission system.
@@ -394,7 +394,7 @@ def plot_built_transmission_capacity(
             lat=df_coords["Latitude"],
             text=df_coords["Location"],
             mode="markers+text",
-            marker=dict(size=10, color="#1f78b4"),
+            marker=dict(size=marker_size, color="#1f78b4"),
             textfont=dict(size=10),
             textposition="bottom center",
             name="Nodes",
