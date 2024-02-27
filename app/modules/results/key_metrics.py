@@ -104,7 +104,6 @@ class KeyMetricsResults:
             df.drop(columns="PriceLoadWeighted")
 
             avg_weighted_price.columns = avg_weighted_price.columns.droplevel()
-
             return avg_weighted_price
 
     def total_flow(self, df):
@@ -112,12 +111,13 @@ class KeyMetricsResults:
         df_t["FlowTotal_MW"] = df_t["FlowOut_MW"] + df_t["FlowIn_MW"]
         return df_t.pivot(index="Period", columns="Node", values="FlowTotal_MW")
 
-    def compute_discounted_marginal_cost(self) -> pd.DataFrame:
+    def compute_discounted_marginal_cost(self, discount) -> pd.DataFrame:
         """
         Compute the discounted marginal costs. If npv_discounted==True, this is the marginal cost in the objective
         function of Empire. Hence it can be used to verify which units are the marginal units and hence
         setting the electricity price in the different nodes (unless it is import/storage).
 
+        :param discout: Discount values to first period or not.
         :return: Dataframe
         """
 
@@ -131,13 +131,14 @@ class KeyMetricsResults:
         df_marginal_costs.loc[:, "Period"] = df_marginal_costs.loc[:, "Period"].replace(period_to_year_mapping)
         df_mc = df_marginal_costs.pivot(columns="Generator", index="Period", values="MarginalCost_EurperMWh")
 
-        # Discount to PV
-        discout_mapper = {
-            period: (1 + self.empire_config.discount_rate) ** (-self.empire_config.leap_years_investment * i)
-            for i, period in enumerate(df_mc.index.get_level_values("Period").unique().sort_values())
-        }
+        if discount:
+            # Discount to PV
+            discout_mapper = {
+                period: (1 + self.empire_config.discount_rate) ** (-self.empire_config.leap_years_investment * i)
+                for i, period in enumerate(df_mc.index.get_level_values("Period").unique().sort_values())
+            }
 
-        discounting = df_mc.index.get_level_values("Period").map(discout_mapper).values
-        df_mc = df_mc.mul(discounting, axis=0)
-
+            discounting = df_mc.index.get_level_values("Period").map(discout_mapper).values
+            df_mc = df_mc.mul(discounting, axis=0)
+        
         return df_mc
