@@ -47,8 +47,8 @@ def output(active_results: Path) -> None:
 
     input_client = get_input_client(active_results)
 
-    # config_file = active_results / "Input/Xlsx/config.txt"
-    config_file = Path.cwd() / "config/run.yaml"
+    config_file = active_results / "Input/Xlsx/config.txt"
+    # config_file = Path.cwd() / "config/run.yaml"
     config = read_config_file(config_file)
     empire_config = EmpireConfiguration.from_dict(config=config)
 
@@ -308,11 +308,7 @@ def output(active_results: Path) -> None:
     st.dataframe(flow_df[selected_nodes].style.format("{:.2f}").background_gradient(cmap="Blues"))
 
     st.markdown("Marginal prices for generators")
-    df_mc = key_metrics_results.compute_discounted_marginal_cost()
-    st.dataframe(df_mc.style.format("{:.2f}").background_gradient(cmap="Blues"))
-
-    st.markdown("Marginal prices for generators")
-    df_mc = key_metrics_results.compute_discounted_marginal_cost()
+    df_mc = key_metrics_results.compute_discounted_marginal_cost(discount=discount_prices)
     st.dataframe(df_mc.style.format("{:.2f}").background_gradient(cmap="Blues"))
 
 
