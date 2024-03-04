@@ -551,9 +551,13 @@ new_input_client.storage.set_lifetime(df_lifetime)
 # NODE #
 ########
 
+profiles_path = Path("/Users/martihj/Library/CloudStorage/OneDrive-NTNU/Postdoc/Dataset/DummySystem/loadpvwind8.csv")
+
+df_profiles = pd.read_csv(profiles_path)
+
 df_electric_annual_demand = existing_input_client.nodes.get_electric_annual_demand()
 columns = ["Nodes", "Period", "ElectricAdjustment in MWh per hour"]
-electric_annual_demand_data = [["Node1", 1, 100 * 8760], ["NodeDummy", 1, 0.0]]
+electric_annual_demand_data = [["Node1", 1, (df_profiles["LOAD"] * 100).sum()], ["NodeDummy", 1, 0.0]]
 df_electric_annual_demand = pd.DataFrame(electric_annual_demand_data, columns=columns)
 
 df_node_lost_load_cost = existing_input_client.nodes.get_node_lost_load_cost()
@@ -575,9 +579,6 @@ new_input_client.nodes.set_hydro_generators_max_annual_production(df_hydro_gener
 #################
 
 datetime_format = "%d/%m/%Y %H:%M"
-profiles_path = Path("/Users/martihj/Library/CloudStorage/OneDrive-NTNU/Postdoc/Dataset/DummySystem/loadpvwind8.csv")
-
-df_profiles = pd.read_csv(profiles_path)
 
 scenario_data_path = dataset_path / "ScenarioData"
 scenario_data_path.mkdir(exist_ok=True, parents=True)
@@ -606,7 +607,7 @@ df_solar.to_csv(scenario_data_path / "solar.csv", index=False, date_format=datet
 
 df_electricload = pd.DataFrame(
     {
-        "Node1": df_profiles["LOAD"],
+        "Node1": df_profiles["LOAD"]*100,
         "time": date_range,
         "hour": date_range.hour,
         "dayofweek": date_range.dayofweek,
