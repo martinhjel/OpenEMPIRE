@@ -389,9 +389,7 @@ class ElectricLoadManager(IDataManager):
 
         df_electric_annual_demand.loc[cond, "ElectricAdjustment in MWh per hour"] = (scale + self.shift) * 8760
 
-        df_electricload.loc[:, self.node] = (scale + self.shift / df_electricload[self.node]) * df_electricload[
-            self.node
-        ]
+        df_electricload.loc[:, self.node] = (self.scale * df_electricload[self.node] + self.shift)
 
         self.client.nodes.set_electric_annual_demand(df_electric_annual_demand)
 
