@@ -23,17 +23,9 @@ parser.add_argument("-ncc", "--nuclear-capital-cost", help="Nuclear capacity cos
 parser.add_argument("-na", "--nuclear-availability", help="Nuclear availability", type=restricted_float, required=True)
 parser.add_argument(
     "-w",
-    "--max-onshore-wind-norway",
-    help="Maximum installed onshore wind in Norwegian areas. If lower than initial, initial will be used.",
-    type=float,
-    required=True,
-)
-parser.add_argument(
-    "-wg",
-    "--max-offshore-wind-grounded-norway",
-    help="Maximum installed offshore grounded wind in Norwegian areas. If lower than initial, initial will be used.",
-    type=float,
-    required=True,
+    "--no-onshore-wind-norway",
+    help="Dont allow installed onshore wind in Norway.",
+    action="store_true"
 )
 
 parser.add_argument(
@@ -57,14 +49,20 @@ parser.add_argument(
     action="store_true",
 )
 
+parser.add_argument(
+    "-g",
+    "--germany",
+    help="If true, nuclear is not allowed in Germany and Austria.",
+    action="store_true",
+)
+
 parser.add_argument("-t", "--test-run", help="Test run without optimization", action="store_true")
 
 args = parser.parse_args()
 
 capital_cost = args.nuclear_capital_cost
 nuclear_availability = args.nuclear_availability
-max_onshore_wind_norway = args.max_onshore_wind_norway
-max_offshore_wind_grounded_norway = args.max_offshore_wind_grounded_norway
+no_onshore_wind_norway = args.no_onshore_wind_norway
 additional_load_is_baseload = args.baseload
 version = "europe_v51"
 
@@ -74,14 +72,14 @@ empire_config = EmpireConfiguration.from_dict(config=config)
 
 empire_config.additional_load_is_baseload = additional_load_is_baseload
 
-run_path = Path.cwd() / "Results/run_analysis/ncc{ncc}_na{na}_w{w}_wog{wog}_p{p}_b{b}_ccs{c}".format(
+run_path = Path.cwd() / "Results/run_analysis/ncc{ncc}_na{na}_w{w}_p{p}_b{b}_ccs{c}_{g}ger".format(
     ncc=capital_cost,
     na=nuclear_availability,
-    w=max_onshore_wind_norway,
-    wog=max_offshore_wind_grounded_norway,
+    w=no_onshore_wind_norway,
     p=args.protective,
     b=additional_load_is_baseload,
     c=args.ccs,
+    g=args.germany,
 )
 
 if (run_path / "Output/results_objective.csv").exists():
@@ -99,26 +97,40 @@ if additional_load_is_baseload:
 
     empire_config.use_scenario_generation = True
 
-
 logger.info("Running analysis with:")
 logger.info(f"Nuclear capital cost: {capital_cost}")
 logger.info(f"Nuclear availability: {nuclear_availability}")
-logger.info(f"Max installed onshore wind per elspot area in Norway: {max_onshore_wind_norway}")
-logger.info(f"Max installed grounded offshore wind per elspot area in Norway: {max_offshore_wind_grounded_norway}")
+logger.info(f"No installed onshore wind in Norway: {no_onshore_wind_norway}")
 logger.info(f"Dataset version: {version}")
+logger.info(f"Include CCS: {args.ccs}")
+logger.info(f"Skip nuclear in Germany: {args.germany}")
 
 client = EmpireInputClient(dataset_path=run_config.dataset_path)
 
 data_managers = [
     AvailabilityManager(client=client, generator_technology="Nuclear", availability=nuclear_availability),
     CapitalCostManager(client=client, generator_technology="Nuclear", capital_cost=capital_cost),
-    MaxInstalledCapacityManager(
-        client=client,
-        nodes=["NO1", "NO2", "NO3", "NO4", "NO5"],
-        generator_technology="Wind_onshr",
-        max_installed_capacity=max_onshore_wind_norway,
-    ),
 ]
+
+if no_onshore_wind_norway:
+    data_managers.append(
+        MaxInstalledCapacityManager(
+            client=client,
+            nodes=["NO1", "NO2", "NO3", "NO4", "NO5"],
+            generator_technology="Wind_onshr",
+            max_installed_capacity=0.0,
+        )
+    )
+
+if not args.germany:
+    data_managers.append(
+        MaxInstalledCapacityManager(
+            client=client,
+            generator_technology="Nuclear",
+            nodes=["Germany", "Austria"],
+            max_installed_capacity=200000,
+        )
+    )
 
 if args.protective:
     logger.info(
@@ -154,16 +166,6 @@ if args.protective:
                 client=client, from_node=from_node, to_node=to_node, max_installed_capacity=0.0
             )
         )
-
-if max_offshore_wind_grounded_norway is not None:
-    data_managers.append(
-        MaxInstalledCapacityManager(
-            client=client,
-            nodes=["NO1", "NO2", "NO3", "NO4", "NO5"],
-            generator_technology="Wind_offshr_grounded",
-            max_installed_capacity=max_offshore_wind_grounded_norway,
-        )
-    )
 
 if args.ccs:
     logger.info("Adding CCS")

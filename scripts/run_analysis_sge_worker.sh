@@ -5,6 +5,7 @@ w=$3
 p=$4
 b=$5
 c=$6
+g=$7
 
 # Load modules and activate conda environment
 module load gurobi/10.0
@@ -33,8 +34,15 @@ cmd="python scripts/run_analysis.py"
 # Add arguments that are always present
 cmd+=" --nuclear-capital-cost $ncc"
 cmd+=" --nuclear-availability $na"
-cmd+=" --max-onshore-wind-norway $w"
-cmd+=" --max-offshore-wind-grounded-norway $w"
+
+# Conditionally add the -p flag
+if [ "$w" == "true" ]; then
+    echo "No onshore wind norway case"
+    cmd+=" -w"
+else
+    echo "Onshore wind norway case"
+fi
+
 
 # Conditionally add the -p flag
 if [ "$p" == "true" ]; then
@@ -61,6 +69,15 @@ if [ "$c" == "true" ]; then
 else
     echo "Not CCS case"
 fi
+
+# Conditionally add the -g flag
+if [ "$g" == "true" ]; then
+    echo "No german/austrian nuclear"
+    cmd+=" -g"
+else
+    echo "Unconstrained nuclear in Germany/Austria"
+fi
+
 
 echo Executing: + $cmd
 
