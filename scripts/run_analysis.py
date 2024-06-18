@@ -72,7 +72,7 @@ empire_config = EmpireConfiguration.from_dict(config=config)
 
 empire_config.additional_load_is_baseload = additional_load_is_baseload
 
-run_path = Path.cwd() / "Results/run_analysis/ncc{ncc}_na{na}_w{w}_p{p}_b{b}_ccs{c}_{g}ger".format(
+run_path = Path.cwd() / "Results/run_analysis/ncc{ncc}_na{na}_w{w}_p{p}_b{b}_ccs{c}_de{g}".format(
     ncc=capital_cost,
     na=nuclear_availability,
     w=no_onshore_wind_norway,
