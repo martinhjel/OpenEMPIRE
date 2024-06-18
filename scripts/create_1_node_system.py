@@ -470,7 +470,7 @@ df_power_max_built_capacity = pd.DataFrame(power_max_built_capacity_data, column
 
 df_energy_capital_cost = existing_input_client.storage.get_energy_capital_cost()
 columns = ["StorageTypes", "Period", "EnergyCapitalCost in euro per kWh"]
-energy_capital_cost_data = [["Hydro Pump Storage", 1, 1200.0]]
+energy_capital_cost_data = [["Hydro Pump Storage", 1, 0.0]]
 df_energy_capital_cost = pd.DataFrame(energy_capital_cost_data, columns=columns)
 
 df_energy_fixed_om_cost = existing_input_client.storage.get_energy_fixed_om_cost()
@@ -658,11 +658,11 @@ if __name__ == "__main__":
     fig.update_layout(template="plotly")
     fig.show()
 
-    scale = 100
+    scale = 1.0
     delta = 10
 
     df_adjusted = (scale + delta / df_electricload["Node1"]) * df_electricload["Node1"]
-    df_adjusted = df_adjusted / df_adjusted.max()
+    # df_adjusted = df_adjusted / df_adjusted.max()
 
     fig = go.Figure(
         data=[
@@ -675,10 +675,13 @@ if __name__ == "__main__":
     fig.update_layout(template="plotly")
     fig.show()
 
-    (df_electricload["Node1"] * 100).mean()
-    (df_electricload["Node1"] * 100).std()
-    (df_electricload["Node1"] * 110).mean()
-    (df_electricload["Node1"] * 110).std()
+    (df_electricload["Node1"]).mean()
+    (df_electricload["Node1"]).std()
+    (df_electricload["Node1"]).min()
+    (df_adjusted).mean()
+    (df_adjusted).std()
+    df_adjusted.min()
+
 
     ((scale + delta / df_electricload["Node1"]) * df_electricload["Node1"]).mean()
     ((scale + delta / df_electricload["Node1"]) * df_electricload["Node1"]).std()
